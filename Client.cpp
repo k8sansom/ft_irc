@@ -1,6 +1,7 @@
 #include "Client.hpp"
 
-Client::Client(int fd, std::string nickname, bool authentificated) : fd(fd), nickname(nickname), authentificated(false) {}
+Client::Client() {}
+Client::Client(int fd, std::string nickname) : fd(fd), nickname(nickname), authentificated(false) {}
 Client::~Client() {}
 
 std::string Client::getNickname() const {
@@ -25,7 +26,7 @@ bool Client::isAuthenticated() const {
     return authentificated;
 }
 
-bool isValidNickname(const std::string& nickname) {
+bool Client::isValidNickname(const std::string& nickname) {
     if (nickname.empty())
         return false;
     if (nickname[0] == ':' || nickname[0] == '$' || nickname[0] == '#' || nickname[0] == '&')
