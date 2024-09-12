@@ -1,0 +1,2 @@
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ar qc libweechat_plugins_scripts.a "CMakeFiles/weechat_plugins_scripts.dir/plugin-script.c.o" "CMakeFiles/weechat_plugins_scripts.dir/plugin-script-api.c.o" "CMakeFiles/weechat_plugins_scripts.dir/plugin-script-config.c.o"
+/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/ranlib libweechat_plugins_scripts.a
