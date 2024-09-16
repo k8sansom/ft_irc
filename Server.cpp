@@ -56,6 +56,8 @@ void Server::acceptClient() {
 
     clients.insert(std::make_pair(client_fd, Client(client_fd)));
     std::cout << "New client connected: " << client_fd << std::endl;
+    std::string response = "WELCOME TO 3,5 SERVER\r\n";
+    send(client_fd, response.c_str(), response.length(), 0);
 }
 
 void Server::pollClients() {
@@ -91,10 +93,21 @@ void Server::pollClients() {
 }
 
 void Server::handleClientMessage(int client_fd) {
+    if (clients.find(client_fd) == clients.end()) {
+        std::cerr << "Client not found in the list" << std::endl;
+        return;
+    }
     std::string message = receiveMessage(client_fd);
-    if (message.empty()) return;
+    if (message.empty()) 
+        return;
 
     std::cout << "Received from client " << client_fd << ": " << message << std::endl;
+    
+    if (!clients[client_fd].isAuthenticated() && message.rfind("PASS", 0) != 0) {
+        std::string auth_response = "ERROR :You need to authenticate first!\r\n";
+        send(client_fd, auth_response.c_str(), auth_response.length(), 0);
+        return;
+    }
 
     if (message.rfind("PASS", 0) == 0) {
         handlePassCommand(client_fd, message);
@@ -104,11 +117,12 @@ void Server::handleClientMessage(int client_fd) {
         handleUserCommand(client_fd, message);
     } else if (message.rfind("JOIN", 0) == 0) {
         handleJoinCommand(client_fd, message);
-    } else if (message.rfind("PRIVMSG", 0) == 0) {
+    } else if (message.rfind("", 0) == 0) {
         handlePrivMsgCommand(client_fd, message);
+    } else {
+        std::string wrong_command = "Incorrect command\r\n";
     }
 }
-
 
 std::string Server::receiveMessage(int client_fd) {
     char buffer[1024];
@@ -135,9 +149,14 @@ void Server::handlePassCommand(int client_fd, const std::string& message) {
     if (pass == this->password) {
         clients[client_fd].setPassword(pass);
         std::cout << "Client " << client_fd << " provided correct password." << std::endl;
+        std::string corr_pass_response = "Password correct\r\n";
+        send(client_fd, corr_pass_response.c_str(), corr_pass_response.length(), 0);
+        clients[client_fd].authentificate();
+        std::string auth_response = "You are successfully authentificated\r\n";
+        send(client_fd, auth_response.c_str(), auth_response.length(), 0);
     } else {
-        std::string response = "ERROR :Invalid password\r\n";
-        send(client_fd, response.c_str(), response.length(), 0);
+        std::string incorr_pass_response = "ERROR :Invalid password\r\n";
+        send(client_fd, incorr_pass_response.c_str(), incorr_pass_response.length(), 0);
     }
 }
 
@@ -146,6 +165,8 @@ void Server::handleNickCommand(int client_fd, const std::string& message) {
     if (clients[client_fd].isValidNickname(nick)) {
         clients[client_fd].setNickname(nick);
         std::cout << "Client " << client_fd << " set nickname to: " << nick << std::endl;
+        std::string nick_set = "Your nick is set to " + nick + "\r\n";
+        send(client_fd, nick_set.c_str(), nick_set.length(), 0);
     } else {
         std::string response = "ERROR :Invalid nickname\r\n";
         send(client_fd, response.c_str(), response.length(), 0);
@@ -159,9 +180,11 @@ void Server::handleUserCommand(int client_fd, const std::string& message) {
         clients[client_fd].setUsername(username);
         clients[client_fd].authentificate();
         std::cout << "Client " << client_fd << " set username to: " << username << std::endl;
+        std::string usrnm_set = "Your username is set to " + username + "\r\n";
+        send(client_fd, usrnm_set.c_str(), usrnm_set.length(), 0);
 
     } else {
-        std::string response = "ERROR :Invalid USER command\r\n";
+        std::string response = "USAGE: USER <username> <whatever> <servername> :<realname>\r\n";
         send(client_fd, response.c_str(), response.length(), 0);
     }
 }
@@ -223,18 +246,4 @@ void Server::handlePrivMsgCommand(int client_fd, const std::string& message) {
     }
 }
 
-// Should we create a stricter password policy?
-bool Server::isValidPassword(const std::string& password) {
-    if (password.length() < 4) {
-        std::cout << "Error: Password must be at least 4 characters long." << std::endl;
-        return false;
-    }
-    for (size_t i = 0; i < password.length(); ++i) {
-        char c = password[i];
-        if (!isalnum(c) && c != '!' && c != '@' && c != '#' && c != '$' && c != '%' && c != '*' && c != '&') {
-            std::cout << "Error: Password contains invalid character: " << c << std::endl;
-            return false;
-        }
-    }
-    return true;
-}
+

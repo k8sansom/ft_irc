@@ -14,6 +14,8 @@
 
 #include "Client.hpp"
 
+bool isValidPassword(const std::string& password);
+
 class Server {
 public:
     Server(int port, const std::string& password);
@@ -22,7 +24,6 @@ public:
     std::map<int, Client>& getClients();
     std::map<std::string, std::vector<int> >& getChannels();
     void pollClients();
-    bool isValidPassword(const std::string& password);
     
 private:
     int server_socket;
