@@ -22,6 +22,7 @@ public:
     std::map<int, Client>& getClients();
     std::map<std::string, std::vector<int> >& getChannels();
     void pollClients();
+    bool isValidPassword(const std::string& password);
     
 private:
     int server_socket;
@@ -32,11 +33,23 @@ private:
     std::map<int, Client> clients;
     std::map<std::string, std::vector<int> > channels;
 
+    // Socket setup and management
     void setupSocket();
     void bindSocket();
     void listenSocket();
     void acceptClient();
+
+    // Client message handling
     void handleClientMessage(int client_fd);
+    std::string receiveMessage(int client_fd);
+
+    // Command handling
+    void handlePassCommand(int client_fd, const std::string& message);
+    void handleNickCommand(int client_fd, const std::string& message);
+    void handleUserCommand(int client_fd, const std::string& message);
+    void handleJoinCommand(int client_fd, const std::string& message);
+    void handlePrivMsgCommand(int client_fd, const std::string& message);
+
     bool checkName(std::string nickname);
 };
 

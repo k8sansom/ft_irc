@@ -6,7 +6,7 @@
 
 class Client {
 public:
-    Client(); 
+    Client();
     Client(int fd, std::string nickname = "");
     ~Client();
 
@@ -14,16 +14,23 @@ public:
     void setNickname(const std::string& nickname);
     int getFd() const;
 
+    void setPassword(const std::string& password);
+    bool checkPassword(const std::string& inputPassword) const;
+
+    void setUsername(const std::string& username);
+    std::string getUsername() const;
+
     void authentificate();
     bool isAuthenticated() const;
 
-    // Declare it as a member function
     bool isValidNickname(const std::string& nickname);
 
 private:
     int fd;
     std::string nickname;
-    bool authentificated;
+    std::string username;
+    std::string password;
+    bool authenticated;
 };
 
 #endif

@@ -91,22 +91,150 @@ void Server::pollClients() {
 }
 
 void Server::handleClientMessage(int client_fd) {
+    std::string message = receiveMessage(client_fd);
+    if (message.empty()) return;
+
+    std::cout << "Received from client " << client_fd << ": " << message << std::endl;
+
+    if (message.rfind("PASS", 0) == 0) {
+        handlePassCommand(client_fd, message);
+    } else if (message.rfind("NICK", 0) == 0) {
+        handleNickCommand(client_fd, message);
+    } else if (message.rfind("USER", 0) == 0) {
+        handleUserCommand(client_fd, message);
+    } else if (message.rfind("JOIN", 0) == 0) {
+        handleJoinCommand(client_fd, message);
+    } else if (message.rfind("PRIVMSG", 0) == 0) {
+        handlePrivMsgCommand(client_fd, message);
+    }
+}
+
+
+std::string Server::receiveMessage(int client_fd) {
     char buffer[1024];
     int bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
 
     if (bytes_received < 0) {
         std::cerr << "Failed to receive message from client " << client_fd << std::endl;
-        return;
+        return "";
     } else if (bytes_received == 0) {
         close(client_fd);
         clients.erase(client_fd);
         std::cout << "Client " << client_fd << " disconnected" << std::endl;
-        return;
+        return "";
     }
 
     buffer[bytes_received] = '\0';
-    std::cout << "Received from client " << client_fd << ": " << buffer << std::endl;
+    return std::string(buffer);
+}
 
-    std::string response = "Message received\n";
-    send(client_fd, response.c_str(), response.length(), 0);
+void Server::handlePassCommand(int client_fd, const std::string& message) {
+    std::string pass = message.substr(5);
+    pass.erase(pass.find_last_not_of("\r\n") + 1);
+
+    if (pass == this->password) {
+        clients[client_fd].setPassword(pass);
+        std::cout << "Client " << client_fd << " provided correct password." << std::endl;
+    } else {
+        std::string response = "ERROR :Invalid password\r\n";
+        send(client_fd, response.c_str(), response.length(), 0);
+    }
+}
+
+void Server::handleNickCommand(int client_fd, const std::string& message) {
+    std::string nick = message.substr(5);
+    if (clients[client_fd].isValidNickname(nick)) {
+        clients[client_fd].setNickname(nick);
+        std::cout << "Client " << client_fd << " set nickname to: " << nick << std::endl;
+    } else {
+        std::string response = "ERROR :Invalid nickname\r\n";
+        send(client_fd, response.c_str(), response.length(), 0);
+    }
+}
+
+void Server::handleUserCommand(int client_fd, const std::string& message) {
+    size_t pos = message.find(' ', 5);
+    if (pos != std::string::npos) {
+        std::string username = message.substr(5, pos - 5);
+        clients[client_fd].setUsername(username);
+        clients[client_fd].authentificate();
+        std::cout << "Client " << client_fd << " set username to: " << username << std::endl;
+
+    } else {
+        std::string response = "ERROR :Invalid USER command\r\n";
+        send(client_fd, response.c_str(), response.length(), 0);
+    }
+}
+
+void Server::handleJoinCommand(int client_fd, const std::string& message) {
+    size_t pos = message.find(' ');
+    if (pos != std::string::npos) {
+        std::string channel = message.substr(pos + 1);
+        if (!channel.empty() && channel[0] == '#') {
+            channels[channel].push_back(client_fd);
+            std::cout << "Client " << client_fd << " joined channel: " << channel << std::endl;
+            
+            std::string response = ":" + clients[client_fd].getNickname() + " JOIN " + channel + "\r\n";
+            send(client_fd, response.c_str(), response.length(), 0);
+        } else {
+            std::string errorMsg = "ERROR :Invalid channel name\r\n";
+            send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
+        }
+    } else {
+        std::string errorMsg = "ERROR :JOIN command missing channel\r\n";
+        send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
+    }
+}
+
+void Server::handlePrivMsgCommand(int client_fd, const std::string& message) {
+    size_t pos = message.find(' ');
+    size_t colon_pos = message.find(" :");
+
+    if (pos != std::string::npos && colon_pos != std::string::npos) {
+        std::string target = message.substr(pos + 1, colon_pos - pos - 1);
+        std::string msgContent = message.substr(colon_pos + 2);
+
+        if (target[0] == '#') {
+            if (channels.find(target) != channels.end()) {
+                for (std::vector<int>::iterator it = channels[target].begin(); it != channels[target].end(); ++it) {
+                    if (*it != client_fd) {
+                        std::string response = ":" + clients[client_fd].getNickname() + " PRIVMSG " + target + " :" + msgContent + "\r\n";
+                        send(*it, response.c_str(), response.length(), 0);
+                    }
+                }
+            } else {
+                std::string errorMsg = "ERROR :No such channel\r\n";
+                send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
+            }
+        } else {
+                for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
+                    if (it->second.getNickname() == target) {
+                        std::string response = ":" + clients[client_fd].getNickname() + " PRIVMSG " + target + " :" + msgContent + "\r\n";
+                        send(it->first, response.c_str(), response.length(), 0);
+                        return;
+                }
+            }
+            std::string errorMsg = "ERROR :No such nick/channel\r\n";
+            send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
+        }
+    } else {
+        std::string errorMsg = "ERROR :Invalid PRIVMSG command\r\n";
+        send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
+    }
+}
+
+// Should we create a stricter password policy?
+bool Server::isValidPassword(const std::string& password) {
+    if (password.length() < 4) {
+        std::cout << "Error: Password must be at least 4 characters long." << std::endl;
+        return false;
+    }
+    for (size_t i = 0; i < password.length(); ++i) {
+        char c = password[i];
+        if (!isalnum(c) && c != '!' && c != '@' && c != '#' && c != '$' && c != '%' && c != '*' && c != '&') {
+            std::cout << "Error: Password contains invalid character: " << c << std::endl;
+            return false;
+        }
+    }
+    return true;
 }
