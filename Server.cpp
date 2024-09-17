@@ -162,7 +162,7 @@ void Server::handlePassCommand(int client_fd, const std::string& message) {
 
 void Server::handleNickCommand(int client_fd, const std::string& message) {
     std::string nick = message.substr(5);
-    if (clients[client_fd].isValidNickname(nick)) {
+    if (clients[client_fd].isValidNickname(nick)) {clients[client_fd].authenticate();
         clients[client_fd].setNickname(nick);
         std::cout << "Client " << client_fd << " set nickname to: " << nick << std::endl;
         std::string nick_set = "Your nick is set to " + nick + "\r\n";
