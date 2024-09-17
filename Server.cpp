@@ -73,7 +73,9 @@ void Server::pollClients() {
         client_fd.fd = it->first;
         client_fd.events = POLLIN;
         fds.push_back(client_fd);
+        std::cout << ":" << it->second.getNickname() << ":" << std::endl;
     }
+    std::cout << "Number of clients: " << clients.size() << std::endl; 
     
     int ret = poll(fds.data(), fds.size(), -1);
     if (ret < 0) {
@@ -97,49 +99,66 @@ void Server::handleClientMessage(int client_fd) {
         std::cerr << "Client not found in the list" << std::endl;
         return;
     }
-    std::string message = receiveMessage(client_fd);
-    if (message.empty()) 
-        return;
 
-    std::cout << "Received from client " << client_fd << ": " << message << std::endl;
-    
-    if (!clients[client_fd].isAuthenticated() && message.rfind("PASS", 0) != 0) {
-        std::string auth_response = "ERROR :You need to authenticate first!\r\n";
-        send(client_fd, auth_response.c_str(), auth_response.length(), 0);
-        return;
-    }
+    std::vector<std::string> messages = receiveMessage(client_fd);
+    if (messages.empty()) 
+        return ;
 
-    if (message.rfind("PASS", 0) == 0) {
-        handlePassCommand(client_fd, message);
-    } else if (message.rfind("NICK", 0) == 0) {
-        handleNickCommand(client_fd, message);
-    } else if (message.rfind("USER", 0) == 0) {
-        handleUserCommand(client_fd, message);
-    } else if (message.rfind("JOIN", 0) == 0) {
-        handleJoinCommand(client_fd, message);
-    } else if (message.rfind("", 0) == 0) {
-        handlePrivMsgCommand(client_fd, message);
-    } else {
-        std::string wrong_command = "Incorrect command\r\n";
+    for (std::vector<std::string>::iterator it = messages.begin(); it != messages.end(); ++it) {
+        std::string message = *it;
+        if (message.empty()) 
+            continue;
+
+        std::cout << "Received from client " << client_fd << ": " << message << std::endl;
+
+        if (!clients[client_fd].isAuthenticated() && message.rfind("PASS", 0) != 0) {
+            std::string auth_response = "ERROR :You need to authenticate first!\r\n";
+            send(client_fd, auth_response.c_str(), auth_response.length(), 0);
+            continue;
+        }
+
+        if (message.rfind("PASS", 0) == 0) {
+            handlePassCommand(client_fd, message);
+        } else if (message.rfind("NICK", 0) == 0) {
+            handleNickCommand(client_fd, message);
+        } else if (message.rfind("USER", 0) == 0) {
+            handleUserCommand(client_fd, message);
+        } else if (message.rfind("JOIN", 0) == 0) {
+            handleJoinCommand(client_fd, message);
+        } else if (message.rfind("PRIVMSG", 0) == 0) {
+            handlePrivMsgCommand(client_fd, message);
+        } else {
+            std::string wrong_command = "ERROR :Unknown command\r\n";
+            send(client_fd, wrong_command.c_str(), wrong_command.length(), 0);
+        }
     }
 }
 
-std::string Server::receiveMessage(int client_fd) {
+std::vector<std::string> Server::receiveMessage(int client_fd) {
     char buffer[1024];
-    int bytes_received = recv(client_fd, buffer, sizeof(buffer), 0);
+    int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
     if (bytes_received < 0) {
         std::cerr << "Failed to receive message from client " << client_fd << std::endl;
-        return "";
+        return std::vector<std::string>();;
     } else if (bytes_received == 0) {
         close(client_fd);
         clients.erase(client_fd);
         std::cout << "Client " << client_fd << " disconnected" << std::endl;
-        return "";
+        return std::vector<std::string>();;
     }
 
     buffer[bytes_received] = '\0';
-    return std::string(buffer);
+    std::string data(buffer);
+    std::vector<std::string> messages;
+    size_t pos = 0;
+
+    while ((pos = data.find("\r\n")) != std::string::npos) {
+        messages.push_back(data.substr(0, pos));
+        data.erase(0, pos + 2);
+    }
+
+    return messages;
 }
 
 void Server::handlePassCommand(int client_fd, const std::string& message) {
@@ -164,7 +183,7 @@ void Server::handleNickCommand(int client_fd, const std::string& message) {
     std::string nick = message.substr(5);
 	std::string::size_type pos = nick.find_last_not_of("\r\n");
     if (pos != std::string::npos) {
-        nick.erase(pos + 1); // erase from the end to one past the last non-whitespace character
+        nick.erase(pos + 1);
     }
     if (clients[client_fd].isValidNickname(nick, clients)) {
 		clients[client_fd].authenticate();
@@ -173,8 +192,12 @@ void Server::handleNickCommand(int client_fd, const std::string& message) {
         std::string nick_set = "Your nick is set to " + nick + "\r\n";
         send(client_fd, nick_set.c_str(), nick_set.length(), 0);
     } else {
-        std::string response = "ERROR: Invalid nickname\r\n";
+        std::string response = "ERROR: Invalid nickname. Try reconnecting with a different one.\r\n";
         send(client_fd, response.c_str(), response.length(), 0);
+        // close(client_fd);
+        // clients.erase(client_fd);
+        // std::cout << "Client " << client_fd << " disconnected due to duplicate nickname." << std::endl;
+        // return;
     }
 }
 

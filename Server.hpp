@@ -42,7 +42,7 @@ private:
 
     // Client message handling
     void handleClientMessage(int client_fd);
-    std::string receiveMessage(int client_fd);
+    std::vector<std::string> receiveMessage(int client_fd);
 
     // Command handling
     void handlePassCommand(int client_fd, const std::string& message);
