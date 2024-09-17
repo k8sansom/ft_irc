@@ -20,7 +20,7 @@ public:
     void setUsername(const std::string& username);
     std::string getUsername() const;
 
-    void authentificate();
+    void authenticate();
     bool isAuthenticated() const;
 
     bool isValidNickname(const std::string& nickname);

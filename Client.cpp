@@ -34,7 +34,7 @@ int Client::getFd() const {
     return fd;
 }
 
-void Client::authentificate() {
+void Client::authenticate() {
     authenticated = true;
 }
 

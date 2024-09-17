@@ -151,8 +151,8 @@ void Server::handlePassCommand(int client_fd, const std::string& message) {
         std::cout << "Client " << client_fd << " provided correct password." << std::endl;
         std::string corr_pass_response = "Password correct\r\n";
         send(client_fd, corr_pass_response.c_str(), corr_pass_response.length(), 0);
-        clients[client_fd].authentificate();
-        std::string auth_response = "You are successfully authentificated\r\n";
+        clients[client_fd].authenticate();
+        std::string auth_response = "You are successfully authenticated\r\n";
         send(client_fd, auth_response.c_str(), auth_response.length(), 0);
     } else {
         std::string incorr_pass_response = "ERROR :Invalid password\r\n";
@@ -178,7 +178,7 @@ void Server::handleUserCommand(int client_fd, const std::string& message) {
     if (pos != std::string::npos) {
         std::string username = message.substr(5, pos - 5);
         clients[client_fd].setUsername(username);
-        clients[client_fd].authentificate();
+        clients[client_fd].authenticate();
         std::cout << "Client " << client_fd << " set username to: " << username << std::endl;
         std::string usrnm_set = "Your username is set to " + username + "\r\n";
         send(client_fd, usrnm_set.c_str(), usrnm_set.length(), 0);
