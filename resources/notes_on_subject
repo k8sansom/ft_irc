@@ -31,6 +31,7 @@ write, but also listen, and so forth).
 	without using poll() (or equivalent), your grade will be 0.
 • Several IRC clients exist. You have to choose one of them as a reference. Your
 reference client will be used during the evaluation process.
+	https://flathub.org/apps/org.squidowl.halloy
 	/*https://weechat.org/*/
 • Your reference client must be able to connect to your server without encountering
 any error.
