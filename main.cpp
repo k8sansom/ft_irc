@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <stdexcept>
+#include <cstdlib>
 
 // Should we create a stricter password policy?
 bool isValidPassword(const std::string& password) {
@@ -27,7 +28,7 @@ int main(int ac, char** av) {
     }
 
     try {
-        int port = std::stoi(av[1]);
+        int port = atoi(av[1]);
         if (port <= 0) {
             throw std::invalid_argument("Error: invalid port number");
         }

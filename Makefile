@@ -1,7 +1,9 @@
 NAME = ircserv
 CC = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98
-SRCS = Client.cpp Server.cpp main.cpp
+SRCS = 	Client.cpp \
+		Server.cpp \
+		main.cpp
 OBJDIR = obj
 OBJS = $(SRCS:%.cpp=$(OBJDIR)/%.o)
 
