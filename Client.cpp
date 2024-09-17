@@ -9,9 +9,7 @@ std::string Client::getNickname() const {
 }
 
 void Client::setNickname(const std::string& nickname) {
-    if (isValidNickname(nickname)) {
         this->nickname = nickname;
-    }
 }
 
 void Client::setPassword(const std::string& password) {
@@ -42,7 +40,7 @@ bool Client::isAuthenticated() const {
     return authenticated;
 }
 
-bool Client::isValidNickname(const std::string& nickname) {
+bool Client::isValidNickname(const std::string& nickname, const std::map<int, Client>& clients) const {
     if (nickname.empty()) return false;
     if (nickname[0] == ':' || nickname[0] == '$' || nickname[0] == '#' || nickname[0] == '&') return false;
     for (size_t i = 0; i < nickname.length(); ++i) {
@@ -50,6 +48,13 @@ bool Client::isValidNickname(const std::string& nickname) {
             nickname[i] == '!' || nickname[i] == '?' || nickname[i] == '@') {
             std::cout << "Your nickname contains a prohibited symbol: " << nickname[i] << std::endl;
             std::cout << "Please enter a valid nickname." << std::endl;
+            return false;
+        }
+    }
+	std::map<int, Client>::const_iterator it;
+	for (it = clients.begin(); it != clients.end(); ++it) {
+        if (it->second.getNickname() == nickname) {
+            std::cout << "Nickname '" << nickname << "' is already in use." << std::endl;
             return false;
         }
     }

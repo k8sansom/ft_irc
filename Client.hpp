@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <string>
+#include <map>
 
 class Client {
 public:
@@ -23,7 +24,7 @@ public:
     void authenticate();
     bool isAuthenticated() const;
 
-    bool isValidNickname(const std::string& nickname);
+    bool isValidNickname(const std::string& nickname, const std::map<int, Client>& clients) const;
 
 private:
     int fd;
