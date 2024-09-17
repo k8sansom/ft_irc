@@ -51,7 +51,6 @@ private:
     void handleJoinCommand(int client_fd, const std::string& message);
     void handlePrivMsgCommand(int client_fd, const std::string& message);
 
-    bool checkName(std::string nickname);
 };
 
 #endif

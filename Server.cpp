@@ -51,7 +51,7 @@ void Server::acceptClient() {
     int client_fd = accept(server_socket, (sockaddr*)&client_address, &client_len);
     if (client_fd < 0) {
         std::cerr << "Failed to accept client connection" << std::endl;
-        return;
+        return ;
     }
 
     clients.insert(std::make_pair(client_fd, Client(client_fd)));
@@ -185,19 +185,40 @@ void Server::handleNickCommand(int client_fd, const std::string& message) {
     if (pos != std::string::npos) {
         nick.erase(pos + 1);
     }
-    if (clients[client_fd].isValidNickname(nick, clients)) {
+    if (!clients[client_fd].isValidNickname(nick)) {
+        std::string response = "ERROR: Invalid nickname. Symbols: : $ # & . , * ! ? @ are not allowed\r\n";
+        send(client_fd, response.c_str(), response.length(), 0);
+        std::string new_nick = clients[client_fd].sanitizeNickname(nick);
+        clients[client_fd].setNickname(new_nick);
+        std::cout << "Client " << client_fd << " set nickname to: " << new_nick << std::endl;
+        std::string nick_set = "Your nick is set to " + new_nick + "\r\n";
+        send(client_fd, nick_set.c_str(), nick_set.length(), 0);
+          
+        // close(client_fd);
+        // clients.erase(client_fd);
+        // std::cout << "Client " << client_fd << " disconnected due to duplicate nickname." << std::endl;
+        // return;
+    }
+    if (!clients[client_fd].isUniqueNickname(nick, clients)) {
+        std::string response = "ERROR: This nickname already existsmake fclean\r\n";
+        send(client_fd, response.c_str(), response.length(), 0);
+        std::string u_nick = clients[client_fd].getUniqueNickname(nick, clients);
+        clients[client_fd].setNickname(u_nick);
+        std::cout << "Client " << client_fd << " set nickname to: " << u_nick << std::endl;
+        std::string nick_set = "Your nick is set to " + u_nick + "\r\n";
+        send(client_fd, nick_set.c_str(), nick_set.length(), 0);
+          
+        // close(client_fd);
+        // clients.erase(client_fd);
+        // std::cout << "Client " << client_fd << " disconnected due to duplicate nickname." << std::endl;
+        // return;
+    }
+    else {
 		clients[client_fd].authenticate();
         clients[client_fd].setNickname(nick);
         std::cout << "Client " << client_fd << " set nickname to: " << nick << std::endl;
         std::string nick_set = "Your nick is set to " + nick + "\r\n";
         send(client_fd, nick_set.c_str(), nick_set.length(), 0);
-    } else {
-        std::string response = "ERROR: Invalid nickname. Try reconnecting with a different one.\r\n";
-        send(client_fd, response.c_str(), response.length(), 0);
-        // close(client_fd);
-        // clients.erase(client_fd);
-        // std::cout << "Client " << client_fd << " disconnected due to duplicate nickname." << std::endl;
-        // return;
     }
 }
 

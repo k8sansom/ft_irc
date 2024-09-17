@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <cstdlib>
+#include <ctime> 
 
 class Client {
 public:
@@ -24,7 +26,11 @@ public:
     void authenticate();
     bool isAuthenticated() const;
 
-    bool isValidNickname(const std::string& nickname, const std::map<int, Client>& clients) const;
+    bool isValidNickname(const std::string& nickname) const;
+    bool isUniqueNickname(const std::string& nickname, const std::map<int, Client>& clients) const;
+    std::string sanitizeNickname(const std::string& nickname) const;
+    std::string getUniqueNickname(const std::string& nickname, const std::map<int, Client>& clients) const;
+
 
 private:
     int fd;
