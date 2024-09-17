@@ -173,7 +173,7 @@ void Server::handleNickCommand(int client_fd, const std::string& message) {
         std::string nick_set = "Your nick is set to " + nick + "\r\n";
         send(client_fd, nick_set.c_str(), nick_set.length(), 0);
     } else {
-        std::string response = "ERROR :Invalid nickname\r\n";
+        std::string response = "ERROR: Invalid nickname\r\n";
         send(client_fd, response.c_str(), response.length(), 0);
     }
 }
