@@ -157,6 +157,10 @@ std::vector<std::string> Server::receiveMessage(int client_fd) {
         messages.push_back(data.substr(0, pos));
         data.erase(0, pos + 2);
     }
+	if (!data.empty()) {
+        messages.push_back(data);  // Treat remaining data as a complete message
+        data.clear();              // Clear the leftover data
+    }
 
     return messages;
 }
@@ -193,25 +197,15 @@ void Server::handleNickCommand(int client_fd, const std::string& message) {
         std::cout << "Client " << client_fd << " set nickname to: " << new_nick << std::endl;
         std::string nick_set = "Your nick is set to " + new_nick + "\r\n";
         send(client_fd, nick_set.c_str(), nick_set.length(), 0);
-          
-        // close(client_fd);
-        // clients.erase(client_fd);
-        // std::cout << "Client " << client_fd << " disconnected due to duplicate nickname." << std::endl;
-        // return;
     }
     if (!clients[client_fd].isUniqueNickname(nick, clients)) {
-        std::string response = "ERROR: This nickname already existsmake fclean\r\n";
+        std::string response = "ERROR: This nickname already exists\r\n";
         send(client_fd, response.c_str(), response.length(), 0);
         std::string u_nick = clients[client_fd].getUniqueNickname(nick, clients);
         clients[client_fd].setNickname(u_nick);
         std::cout << "Client " << client_fd << " set nickname to: " << u_nick << std::endl;
         std::string nick_set = "Your nick is set to " + u_nick + "\r\n";
         send(client_fd, nick_set.c_str(), nick_set.length(), 0);
-          
-        // close(client_fd);
-        // clients.erase(client_fd);
-        // std::cout << "Client " << client_fd << " disconnected due to duplicate nickname." << std::endl;
-        // return;
     }
     else {
 		clients[client_fd].authenticate();

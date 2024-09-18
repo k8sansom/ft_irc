@@ -106,7 +106,9 @@ std::string Client::getUniqueNickname(const std::string& nickname, const std::ma
             return new_nickname;
         } else {
             int random_number = std::rand() % 1000;
-            new_nickname = "user" + std::to_string(random_number) + "_" + nickname;
+			std::stringstream ss;
+			ss << random_number;
+			new_nickname = "user" + ss.str() + "_" + nickname;
         }
     }
 }
