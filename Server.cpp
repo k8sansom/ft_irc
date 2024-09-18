@@ -73,7 +73,7 @@ void Server::pollClients() {
         client_fd.fd = it->first;
         client_fd.events = POLLIN;
         fds.push_back(client_fd);
-        std::cout << ":" << it->second.getNickname() << ":" << std::endl;
+        std::cout << it->second.getNickname() << ":" << std::endl;
     }
     std::cout << "Number of clients: " << clients.size() << std::endl; 
     
