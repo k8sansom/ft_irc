@@ -1,43 +1,43 @@
 #include "Client.hpp"
 
-Client::Client() : authenticated(false) {}
-Client::Client(int fd, std::string nickname) : fd(fd), nickname(nickname), authenticated(false) {}
+Client::Client() : _authenticated(false) {}
+Client::Client(int fd, std::string nickname) : _fd(fd), _nickname(nickname), _authenticated(false) {}
 Client::~Client() {}
 
 std::string Client::getNickname() const {
-    return nickname;
+    return _nickname;
 }
 
 void Client::setNickname(const std::string& nickname) {
-        this->nickname = nickname;
+        this->_nickname = nickname;
 }
 
 void Client::setPassword(const std::string& password) {
-    this->password = password;
+    this->_password = password;
 }
 
 bool Client::checkPassword(const std::string& inputPassword) const {
-    return inputPassword == this->password;
+    return inputPassword == this->_password;
 }
 
 void Client::setUsername(const std::string& username) {
-    this->username = username;
+    this->_username = username;
 }
 
 std::string Client::getUsername() const {
-    return username;
+    return _username;
 }
 
 int Client::getFd() const {
-    return fd;
+    return _fd;
 }
 
 void Client::authenticate() {
-    authenticated = true;
+    _authenticated = true;
 }
 
 bool Client::isAuthenticated() const {
-    return authenticated;
+    return _authenticated;
 }
 
 bool Client::isValidNickname(const std::string& nickname) const {
@@ -101,7 +101,6 @@ std::string Client::getUniqueNickname(const std::string& nickname, const std::ma
                 break;
             }
         }
-
         if (is_unique) {
             return new_nickname;
         } else {

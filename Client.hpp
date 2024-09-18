@@ -34,11 +34,12 @@ public:
 
 
 private:
-    int fd;
-    std::string nickname;
-    std::string username;
-    std::string password;
-    bool authenticated;
+    int 		_fd;
+    std::string _nickname;
+    std::string _username;
+    std::string _password;
+    bool 		_authenticated;
+	// bool		_operator;
 };
 
 #endif
