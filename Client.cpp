@@ -12,14 +12,6 @@ void Client::setNickname(const std::string& nickname) {
         this->_nickname = nickname;
 }
 
-void Client::setPassword(const std::string& password) {
-    this->_password = password;
-}
-
-bool Client::checkPassword(const std::string& inputPassword) const {
-    return inputPassword == this->_password;
-}
-
 void Client::setUsername(const std::string& username) {
     this->_username = username;
 }
@@ -46,22 +38,22 @@ bool Client::isValidNickname(const std::string& nickname) const {
     for (size_t i = 0; i < nickname.length(); ++i) {
         if (nickname[i] == '.' || nickname[i] == ' ' || nickname[i] == ',' || nickname[i] == '*' ||
             nickname[i] == '!' || nickname[i] == '?' || nickname[i] == '@') {
-            std::cout << "Your nickname contains a prohibited symbol: " << nickname[i] << std::endl;
             return false;
         }
     }
     return true;
 }
 
-std::string Client::sanitizeNickname(const std::string& nickname) const {
-    if (nickname.empty()) return "";
+std::string Client::sanitizeNickname(const std::string& nickname, std::string &err_msg) const {
+    if (nickname.empty()) 
+        return "";
 
     std::string sanitized_nickname;
 
     if (nickname[0] != ':' && nickname[0] != '$' && nickname[0] != '#' && nickname[0] != '&') {
         sanitized_nickname += nickname[0];
     } else {
-        std::cout << "Your nickname starts with a prohibited character, removing it." << std::endl;
+        err_msg += "Your nickname starts with a prohibited character: " + std::string(1, nickname[0]) + ", removing it.\n";
     }
 
     for (size_t i = 1; i < nickname.length(); ++i) {
@@ -69,18 +61,25 @@ std::string Client::sanitizeNickname(const std::string& nickname) const {
             nickname[i] != '!' && nickname[i] != '?' && nickname[i] != '@') {
             sanitized_nickname += nickname[i];
         } else {
-            std::cout << "Your nickname contains a prohibited symbol: " << nickname[i] << ", removing it." << std::endl;
+            err_msg += "Your nickname contains a prohibited symbol: " + std::string(1, nickname[i]) + ", removing it.\n";
         }
+    }
+
+    if (sanitized_nickname.empty()) {
+        sanitized_nickname = "user" + std::to_string(std::rand() % 1000);
+        err_msg += "Your nickname was invalid. Setting it to a default: " + sanitized_nickname + "\n";
     }
 
     return sanitized_nickname;
 }
 
-bool Client::isUniqueNickname(const std::string& nickname, const std::map<int, Client>& clients) const {
+
+
+bool Client::isUniqueNickname(const std::string& nickname, const std::map<int, Client>& clients, std::string &err_msg) const {
     std::map<int, Client>::const_iterator it;
 	for (it = clients.begin(); it != clients.end(); ++it) {
         if (it->second.getNickname() == nickname) {
-            std::cout << "Nickname '" << nickname << "' is already in use." << std::endl;
+            err_msg = "Nickname '" + nickname + "' is already in use.\r\n";
             return false;
         }
     }

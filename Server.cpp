@@ -146,12 +146,12 @@ std::vector<std::string> Server::receiveMessage(int client_fd) {
 
     if (bytes_received < 0) {
         std::cerr << "ERROR: Failed to receive message from client " << client_fd << std::endl;
-        return std::vector<std::string>();;
+        return std::vector<std::string>();
     } else if (bytes_received == 0) {
         close(client_fd);
         clients.erase(client_fd);
         std::cout << "Client " << client_fd << " disconnected due to incorrect password" << std::endl;
-        return std::vector<std::string>();;
+        return std::vector<std::string>();
     }
 
     buffer[bytes_received] = '\0';
@@ -172,11 +172,15 @@ std::vector<std::string> Server::receiveMessage(int client_fd) {
 }
 
 void Server::handlePassCommand(int client_fd, const std::string& message) {
+    if (!isCommandFormatValid(message, "PASS")) {
+        std::string err_msg = "USAGE: PASS <password>\r\n";
+        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
+        return;
+    }
     std::string pass = message.substr(5);
     pass.erase(pass.find_last_not_of("\r\n") + 1);
 
     if (pass == this->password) {
-        clients[client_fd].setPassword(pass);
         std::cout << "Client " << client_fd << " provided correct password." << std::endl;
         std::string corr_pass_response = "Password correct\r\n";
         send(client_fd, corr_pass_response.c_str(), corr_pass_response.length(), 0);
@@ -190,40 +194,60 @@ void Server::handlePassCommand(int client_fd, const std::string& message) {
 }
 
 void Server::handleNickCommand(int client_fd, const std::string& message) {
+    if (!isCommandFormatValid(message, "NICK")) {
+        std::string err_msg = "USAGE: NICK <nickname>.\r\n";
+        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
+        return;
+    }
     std::string nick = message.substr(5);
-	std::string::size_type pos = nick.find_last_not_of("\r\n");
+    std::string::size_type pos = nick.find_last_not_of("\r\n");
     if (pos != std::string::npos) {
         nick.erase(pos + 1);
     }
+    std::string err_msg;
+
+    if (clients[client_fd].getNickname() == nick) {
+        err_msg = "NOTICE :This nickname is already set\r\n";
+        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
+        return;
+    }
+
     if (!clients[client_fd].isValidNickname(nick)) {
-        std::string response = "ERROR: Invalid nickname. Symbols: : $ # & . , * ! ? @ are not allowed\r\n";
-        send(client_fd, response.c_str(), response.length(), 0);
-        std::string new_nick = clients[client_fd].sanitizeNickname(nick);
+        std::string new_nick = clients[client_fd].sanitizeNickname(nick, err_msg);
+        if (!err_msg.empty()) {
+            send(client_fd, err_msg.c_str(), err_msg.length(), 0);  // Send sanitization feedback
+        }
         clients[client_fd].setNickname(new_nick);
         std::cout << "Client " << client_fd << " set nickname to: " << new_nick << std::endl;
         std::string nick_set = "Your nick is set to " + new_nick + "\r\n";
         send(client_fd, nick_set.c_str(), nick_set.length(), 0);
+        return;
     }
-    if (!clients[client_fd].isUniqueNickname(nick, clients)) {
-        std::string response = "ERROR: This nickname already exists\r\n";
-        send(client_fd, response.c_str(), response.length(), 0);
+
+    if (!clients[client_fd].isUniqueNickname(nick, clients, err_msg)) {
+        send(client_fd, err_msg.c_str(), err_msg.length(), 0);  // Send uniqueness error
         std::string u_nick = clients[client_fd].getUniqueNickname(nick, clients);
         clients[client_fd].setNickname(u_nick);
         std::cout << "Client " << client_fd << " set nickname to: " << u_nick << std::endl;
         std::string nick_set = "Your nick is set to " + u_nick + "\r\n";
         send(client_fd, nick_set.c_str(), nick_set.length(), 0);
+        return;
     }
-    else {
-		clients[client_fd].authenticate();
-        clients[client_fd].setNickname(nick);
-        std::cout << "Client " << client_fd << " set nickname to: " << nick << std::endl;
-        std::string nick_set = "Your nick is set to " + nick + "\r\n";
-        send(client_fd, nick_set.c_str(), nick_set.length(), 0);
-    }
+    clients[client_fd].authenticate();
+    clients[client_fd].setNickname(nick);
+    std::cout << "Client " << client_fd << " set nickname to: " << nick << std::endl;
+    std::string nick_set = "Your nick is set to " + nick + "\r\n";
+    send(client_fd, nick_set.c_str(), nick_set.length(), 0);
 }
 
+
 void Server::handleUserCommand(int client_fd, const std::string& message) {
-    size_t pos = message.find(' ', 5);
+    if (!isCommandFormatValid(message, "USER")) {
+        std::string err_msg = "USAGE: USER <username> <whatever> <servername> :<realname>\r\n";
+        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
+        return;
+    }
+    size_t pos = message.find(5);
     if (pos != std::string::npos) {
         std::string username = message.substr(5, pos - 5);
         clients[client_fd].setUsername(username);
@@ -231,10 +255,6 @@ void Server::handleUserCommand(int client_fd, const std::string& message) {
         std::cout << "Client " << client_fd << " set username to: " << username << std::endl;
         std::string usrnm_set = "Your username is set to " + username + "\r\n";
         send(client_fd, usrnm_set.c_str(), usrnm_set.length(), 0);
-
-    } else {
-        std::string response = "USAGE: USER <username> <whatever> <servername> :<realname>\r\n";
-        send(client_fd, response.c_str(), response.length(), 0);
     }
 }
 
@@ -244,7 +264,11 @@ void Server::handleJoinCommand(int client_fd, const std::string& message) {
         send(client_fd, error_msg.c_str(), error_msg.length(), 0);
         return;
     }
-
+    if (!isCommandFormatValid(message, "JOIN")) {
+        std::string error_msg = "ERROR: JOIN command must be followed by a space and a valid channel name\r\n";
+        send(client_fd, error_msg.c_str(), error_msg.length(), 0);
+        return;
+    }
     size_t pos = message.find(' ');
     if (pos != std::string::npos) {
         std::string channel_name = message.substr(pos + 1);
@@ -286,6 +310,7 @@ void Server::handlePrivMsgCommand(int client_fd, const std::string& message) {
         send(client_fd, error_msg.c_str(), error_msg.length(), 0);
         return ;
     }
+    
     size_t pos = message.find(' ');
     size_t colon_pos = message.find(" :");
 
@@ -323,4 +348,9 @@ void Server::handlePrivMsgCommand(int client_fd, const std::string& message) {
     }
 }
 
-
+bool Server::isCommandFormatValid(const std::string& message, const std::string& command) {
+    if (message.size() <= command.size() || message.substr(0, command.size()) != command || message[command.size()] != ' ') {
+        return false;
+    }
+    return true;
+}

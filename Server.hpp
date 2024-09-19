@@ -46,12 +46,13 @@ private:
     std::vector<std::string> receiveMessage(int client_fd);
 
     // Command handling
+    bool isCommandFormatValid(const std::string& message, const std::string& command);
     void handlePassCommand(int client_fd, const std::string& message);
     void handleNickCommand(int client_fd, const std::string& message);
     void handleUserCommand(int client_fd, const std::string& message);
     void handleJoinCommand(int client_fd, const std::string& message);
     void handlePrivMsgCommand(int client_fd, const std::string& message);
-
+ 
 };
 
 #endif

@@ -20,9 +20,6 @@ public:
     void setNickname(const std::string& nickname);
     int getFd() const;
 
-    void setPassword(const std::string& password);
-    bool checkPassword(const std::string& inputPassword) const;
-
     void setUsername(const std::string& username);
     std::string getUsername() const;
 
@@ -30,8 +27,8 @@ public:
     bool isAuthenticated() const;
 
     bool isValidNickname(const std::string& nickname) const;
-    bool isUniqueNickname(const std::string& nickname, const std::map<int, Client>& clients) const;
-    std::string sanitizeNickname(const std::string& nickname) const;
+    bool isUniqueNickname(const std::string& nickname, const std::map<int, Client>& clients, std::string &err_msg) const;
+    std::string sanitizeNickname(const std::string& nickname, std::string &err_msg) const;
     std::string getUniqueNickname(const std::string& nickname, const std::map<int, Client>& clients) const;
 
     bool checkAttributes(std::string& error_msg) const;
