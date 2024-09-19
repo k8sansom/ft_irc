@@ -24,6 +24,14 @@ int Client::getFd() const {
     return _fd;
 }
 
+std::string Client::getRealName() const {
+    return _realname;
+}
+
+void Client::setRealname(const std::string& realname) {
+    this->_realname = realname;
+}
+
 void Client::authenticate() {
     _authenticated = true;
 }

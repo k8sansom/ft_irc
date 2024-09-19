@@ -16,85 +16,6 @@ std::map<std::string, Channel>& Server::getChannels() {
     return channels;
 }
 
-void Server::setupSocket() {
-    server_socket = socket(AF_INET, SOCK_STREAM, 0);
-    if (server_socket < 0) {
-        throw std::runtime_error("ERROR: Failed to create socket");
-    }
-
-    int opt = 1;
-    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    fcntl(server_socket, F_SETFL, O_NONBLOCK);
-}
-
-void Server::bindSocket() {
-    server_address.sin_family = AF_INET;
-    server_address.sin_addr.s_addr = INADDR_ANY;
-    server_address.sin_port = htons(port);
-
-    if (bind(server_socket, (sockaddr*)&server_address, sizeof(server_address)) < 0) {
-        throw std::runtime_error("ERROR: Failed to bind socket");
-    }
-}
-
-void Server::listenSocket() {
-    if (listen(server_socket, 10) < 0) {
-        throw std::runtime_error("ERROR: Failed to listen on socket");
-    }
-    std::cout << "Server listening on port " << port << std::endl;
-}
-
-void Server::acceptClient() {
-    sockaddr_in client_address;
-    socklen_t client_len = sizeof(client_address);
-
-    int client_fd = accept(server_socket, (sockaddr*)&client_address, &client_len);
-    if (client_fd < 0) {
-        std::cerr << "ERROR: Failed to accept client connection" << std::endl;
-        return ;
-    }
-
-    clients.insert(std::make_pair(client_fd, Client(client_fd)));
-    std::cout << "New client connected: " << client_fd << std::endl;
-    std::string response = "WELCOME TO 3,5 SERVER\r\n";
-    send(client_fd, response.c_str(), response.length(), 0);
-}
-
-void Server::pollClients() {
-    std::vector<pollfd> fds;
-    
-    pollfd server_fd;
-    server_fd.fd = server_socket;
-    server_fd.events = POLLIN;
-    fds.push_back(server_fd);
-    
-    std::cout << "List of clients: " << std::endl; 
-    for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
-        pollfd client_fd;
-        client_fd.fd = it->first;
-        client_fd.events = POLLIN;
-        fds.push_back(client_fd);
-        std::cout << it->second.getNickname() << std::endl;
-    }
-    std::cout << "Number of clients: " << clients.size() << std::endl; 
-    
-    int ret = poll(fds.data(), fds.size(), -1);
-    if (ret < 0) {
-        std::cerr << "ERROR: Poll error" << std::endl;
-        return;
-    }
-
-    if (fds[0].revents & POLLIN) {
-        acceptClient();
-    }
-    
-    for (size_t i = 1; i < fds.size(); ++i) {
-        if (fds[i].revents & POLLIN) {
-            handleClientMessage(fds[i].fd);
-        }
-    }
-}
-
 void Server::handleClientMessage(int client_fd) {
     if (clients.find(client_fd) == clients.end()) {
         std::cerr << "ERROR: Client not found in the list" << std::endl;
@@ -193,169 +114,24 @@ void Server::handlePassCommand(int client_fd, const std::string& message) {
     }
 }
 
-void Server::handleNickCommand(int client_fd, const std::string& message) {
-    if (!isCommandFormatValid(message, "NICK")) {
-        std::string err_msg = "USAGE: NICK <nickname>.\r\n";
-        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
-        return;
-    }
-    std::string nick = message.substr(5);
-    std::string::size_type pos = nick.find_last_not_of("\r\n");
-    if (pos != std::string::npos) {
-        nick.erase(pos + 1);
-    }
-    std::string err_msg;
-
-    if (clients[client_fd].getNickname() == nick) {
-        err_msg = "NOTICE :This nickname is already set\r\n";
-        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
-        return;
-    }
-
-    if (!clients[client_fd].isValidNickname(nick)) {
-        std::string new_nick = clients[client_fd].sanitizeNickname(nick, err_msg);
-        if (!err_msg.empty()) {
-            send(client_fd, err_msg.c_str(), err_msg.length(), 0);
-        }
-        clients[client_fd].setNickname(new_nick);
-        std::cout << "Client " << client_fd << " set nickname to: " << new_nick << std::endl;
-        std::string nick_set = "Your nick is set to " + new_nick + "\r\n";
-        send(client_fd, nick_set.c_str(), nick_set.length(), 0);
-        return;
-    }
-
-    if (!clients[client_fd].isUniqueNickname(nick, clients, err_msg)) {
-        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
-        std::string u_nick = clients[client_fd].getUniqueNickname(nick, clients);
-        clients[client_fd].setNickname(u_nick);
-        std::cout << "Client " << client_fd << " set nickname to: " << u_nick << std::endl;
-        std::string nick_set = "Your nick is set to " + u_nick + "\r\n";
-        send(client_fd, nick_set.c_str(), nick_set.length(), 0);
-        return;
-    }
-    clients[client_fd].authenticate();
-    clients[client_fd].setNickname(nick);
-    std::cout << "Client " << client_fd << " set nickname to: " << nick << std::endl;
-    std::string nick_set = "Your nick is set to " + nick + "\r\n";
-    send(client_fd, nick_set.c_str(), nick_set.length(), 0);
-}
-
-
-void Server::handleUserCommand(int client_fd, const std::string& message) {
-
-    if (!isCommandFormatValid(message, "USER")) {
-        std::string err_msg = "USAGE: USER <username> <whatever> <servername> :<realname>\r\n";
-        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
-        return;
-    }
-    if (!clients[client_fd].getUsername().empty()) {
-        std::string err_msg = "ERROR: Username is already set and cannot be changed.\r\n";
-        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
-        return;
-    }
-    size_t pos = message.find(5);
-    if (pos != std::string::npos) {
-        std::string username = message.substr(5, pos - 5);
-        clients[client_fd].setUsername(username);
-        clients[client_fd].authenticate();
-        std::cout << "Client " << client_fd << " set username to: " << username << std::endl;
-        std::string usrnm_set = "Your username is set to " + username + "\r\n";
-        send(client_fd, usrnm_set.c_str(), usrnm_set.length(), 0);
-    }
-}
-
-void Server::handleJoinCommand(int client_fd, const std::string& message) {
-    std::string error_msg;
-    if (!clients[client_fd].checkAttributes(error_msg)) {
-        send(client_fd, error_msg.c_str(), error_msg.length(), 0);
-        return;
-    }
-    if (!isCommandFormatValid(message, "JOIN")) {
-        std::string error_msg = "ERROR: JOIN command must be followed by a space and a valid channel name\r\n";
-        send(client_fd, error_msg.c_str(), error_msg.length(), 0);
-        return;
-    }
-    size_t pos = message.find(' ');
-    if (pos != std::string::npos) {
-        std::string channel_name = message.substr(pos + 1);
-        if (!channel_name.empty() && channel_name[0] == '#') {
-            if (channels.find(channel_name) != channels.end()) {
-                Channel& channel = channels[channel_name];
-                if (channel.addClient(client_fd)) {
-                    std::string response = ":" + clients[client_fd].getNickname() + " JOIN " + channel_name + "\r\n";
-                    send(client_fd, response.c_str(), response.length(), 0);
-                    channel.broadcastMessage(response, client_fd);  // Inform others
-                } else {
-                    std::string errorMsg = "ERROR: You are already in the channel\r\n";
-                    send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
-                }
-            } else {
-                // Channel does not exist, create it and make the client an operator
-                channels.insert(std::make_pair(channel_name, Channel(channel_name, client_fd)));
-                std::cout << "Channel created: " << channel_name << " with operator: " << client_fd << std::endl;
-
-                std::string response = ":" + clients[client_fd].getNickname() + " JOIN " + channel_name + "\r\n";
-                send(client_fd, response.c_str(), response.length(), 0);
-            }
-        } else {
-            std::string errorMsg = "ERROR :Invalid channel name\r\n";
-            send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
-        }
-    } else {
-        std::string errorMsg = "ERROR :JOIN command missing channel\r\n";
-        send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
-    }
-}
-
-
-
-void Server::handlePrivMsgCommand(int client_fd, const std::string& message) {
-    std::string error_msg;
-    if (!clients[client_fd].checkAttributes(error_msg)) {
-        send(client_fd, error_msg.c_str(), error_msg.length(), 0);
-        return ;
-    }
-
-    size_t pos = message.find(' ');
-    size_t colon_pos = message.find(" :");
-
-    if (pos != std::string::npos && colon_pos != std::string::npos) {
-        std::string target = message.substr(pos + 1, colon_pos - pos - 1);
-        std::string msgContent = message.substr(colon_pos + 2);
-
-        if (target[0] == '#') {
-            if (channels.find(target) != channels.end()) {
-                const std::vector<int>& members = channels[target].getMembers();
-                for (std::vector<int>::const_iterator it = members.begin(); it != members.end(); ++it) {
-                    if (*it != client_fd) {
-                        std::string response = ":" + clients[client_fd].getNickname() + " PRIVMSG " + target + " :" + msgContent + "\r\n";
-                        send(*it, response.c_str(), response.length(), 0);
-                    }
-                }
-            } else {
-                std::string errorMsg = "ERROR :No such channel\r\n";
-                send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
-            }
-        } else {
-                for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
-                    if (it->second.getNickname() == target) {
-                        std::string response = ":" + clients[client_fd].getNickname() + " PRIVMSG " + target + " :" + msgContent + "\r\n";
-                        send(it->first, response.c_str(), response.length(), 0);
-                        return;
-                }
-            }
-            std::string errorMsg = "ERROR :No such nick/channel\r\n";
-            send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
-        }
-    } else {
-        std::string errorMsg = "ERROR :Invalid PRIVMSG command\r\n";
-        send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
-    }
-}
-
 bool Server::isCommandFormatValid(const std::string& message, const std::string& command) {
     if (message.size() <= command.size() || message.substr(0, command.size()) != command || message[command.size()] != ' ') {
         return false;
     }
     return true;
+}
+
+void Server::sendError(int client_fd, int error_code, const std::string& target, const std::string& message) {
+    std::string error_msg = ":" + std::to_string(error_code) + " " + target + " :" + message + "\r\n";
+    send(client_fd, error_msg.c_str(), error_msg.length(), 0);
+}
+
+std::vector<std::string> Server::split(const std::string& str, char delimiter) {
+    std::vector<std::string> tokens;
+    std::string token;
+    std::istringstream tokenStream(str);
+    while (std::getline(tokenStream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
 }

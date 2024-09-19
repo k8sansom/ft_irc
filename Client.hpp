@@ -19,6 +19,8 @@ public:
     std::string getNickname() const;
     void setNickname(const std::string& nickname);
     int getFd() const;
+    void setRealname(const std::string& realname);
+    std::string getRealName() const;
 
     void setUsername(const std::string& username);
     std::string getUsername() const;
@@ -37,6 +39,7 @@ private:
     int 		_fd;
     std::string _nickname;
     std::string _username;
+    std::string _realname;
     std::string _password;
     bool 		_authenticated;
 	// bool		_operator;

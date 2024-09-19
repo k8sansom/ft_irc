@@ -3,6 +3,11 @@ CC = c++
 CFLAGS = -Wall -Wextra -Werror -std=c++98
 SRCS = 	Client.cpp \
 		Server.cpp \
+		Server_connection.cpp \
+		Server_join.cpp \
+		Server_nick.cpp \
+		Server_privmsg.cpp \
+		Server_user.cpp \
 		Channel.cpp \
 		main.cpp
 OBJDIR = obj
