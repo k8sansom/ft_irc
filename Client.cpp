@@ -53,7 +53,7 @@ std::string Client::sanitizeNickname(const std::string& nickname, std::string &e
     if (nickname[0] != ':' && nickname[0] != '$' && nickname[0] != '#' && nickname[0] != '&') {
         sanitized_nickname += nickname[0];
     } else {
-        err_msg += "Your nickname starts with a prohibited character: " + std::string(1, nickname[0]) + ", removing it.\n";
+        err_msg += "Your nickname starts with a prohibited character: " + std::string(1, nickname[0]) + ", removing it.\r\n";
     }
 
     for (size_t i = 1; i < nickname.length(); ++i) {
@@ -61,13 +61,13 @@ std::string Client::sanitizeNickname(const std::string& nickname, std::string &e
             nickname[i] != '!' && nickname[i] != '?' && nickname[i] != '@') {
             sanitized_nickname += nickname[i];
         } else {
-            err_msg += "Your nickname contains a prohibited symbol: " + std::string(1, nickname[i]) + ", removing it.\n";
+            err_msg += "Your nickname contains a prohibited symbol: " + std::string(1, nickname[i]) + ", removing it.\r\n";
         }
     }
 
     if (sanitized_nickname.empty()) {
         sanitized_nickname = "user" + std::to_string(std::rand() % 1000);
-        err_msg += "Your nickname was invalid. Setting it to a default: " + sanitized_nickname + "\n";
+        err_msg += "Your nickname was invalid. Setting it to a default: " + sanitized_nickname + "\r\n";
     }
 
     return sanitized_nickname;

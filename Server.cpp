@@ -164,8 +164,8 @@ std::vector<std::string> Server::receiveMessage(int client_fd) {
         data.erase(0, pos + 2);
     }
 	if (!data.empty()) {
-        messages.push_back(data);  // Treat remaining data as a complete message
-        data.clear();              // Clear the leftover data
+        messages.push_back(data);
+        data.clear();
     }
 
     return messages;
@@ -215,7 +215,7 @@ void Server::handleNickCommand(int client_fd, const std::string& message) {
     if (!clients[client_fd].isValidNickname(nick)) {
         std::string new_nick = clients[client_fd].sanitizeNickname(nick, err_msg);
         if (!err_msg.empty()) {
-            send(client_fd, err_msg.c_str(), err_msg.length(), 0);  // Send sanitization feedback
+            send(client_fd, err_msg.c_str(), err_msg.length(), 0);
         }
         clients[client_fd].setNickname(new_nick);
         std::cout << "Client " << client_fd << " set nickname to: " << new_nick << std::endl;
@@ -225,7 +225,7 @@ void Server::handleNickCommand(int client_fd, const std::string& message) {
     }
 
     if (!clients[client_fd].isUniqueNickname(nick, clients, err_msg)) {
-        send(client_fd, err_msg.c_str(), err_msg.length(), 0);  // Send uniqueness error
+        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
         std::string u_nick = clients[client_fd].getUniqueNickname(nick, clients);
         clients[client_fd].setNickname(u_nick);
         std::cout << "Client " << client_fd << " set nickname to: " << u_nick << std::endl;
@@ -242,8 +242,14 @@ void Server::handleNickCommand(int client_fd, const std::string& message) {
 
 
 void Server::handleUserCommand(int client_fd, const std::string& message) {
+
     if (!isCommandFormatValid(message, "USER")) {
         std::string err_msg = "USAGE: USER <username> <whatever> <servername> :<realname>\r\n";
+        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
+        return;
+    }
+    if (!clients[client_fd].getUsername().empty()) {
+        std::string err_msg = "ERROR: Username is already set and cannot be changed.\r\n";
         send(client_fd, err_msg.c_str(), err_msg.length(), 0);
         return;
     }
@@ -274,7 +280,6 @@ void Server::handleJoinCommand(int client_fd, const std::string& message) {
         std::string channel_name = message.substr(pos + 1);
         if (!channel_name.empty() && channel_name[0] == '#') {
             if (channels.find(channel_name) != channels.end()) {
-                // Channel exists, add the client to the channel
                 Channel& channel = channels[channel_name];
                 if (channel.addClient(client_fd)) {
                     std::string response = ":" + clients[client_fd].getNickname() + " JOIN " + channel_name + "\r\n";
@@ -310,7 +315,7 @@ void Server::handlePrivMsgCommand(int client_fd, const std::string& message) {
         send(client_fd, error_msg.c_str(), error_msg.length(), 0);
         return ;
     }
-    
+
     size_t pos = message.find(' ');
     size_t colon_pos = message.find(" :");
 
