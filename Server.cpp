@@ -12,7 +12,7 @@ std::map<int, Client>& Server::getClients() {
     return clients;
 }
 
-std::map<std::string, std::vector<int> >& Server::getChannels() {
+std::map<std::string, Channel>& Server::getChannels() {
     return channels;
 }
 
@@ -239,15 +239,35 @@ void Server::handleUserCommand(int client_fd, const std::string& message) {
 }
 
 void Server::handleJoinCommand(int client_fd, const std::string& message) {
+    std::string error_msg;
+    if (!clients[client_fd].checkAttributes(error_msg)) {
+        send(client_fd, error_msg.c_str(), error_msg.length(), 0);
+        return;
+    }
+
     size_t pos = message.find(' ');
     if (pos != std::string::npos) {
-        std::string channel = message.substr(pos + 1);
-        if (!channel.empty() && channel[0] == '#') {
-            channels[channel].push_back(client_fd);
-            std::cout << "Client " << client_fd << " joined channel: " << channel << std::endl;
-            
-            std::string response = ":" + clients[client_fd].getNickname() + " JOIN " + channel + "\r\n";
-            send(client_fd, response.c_str(), response.length(), 0);
+        std::string channel_name = message.substr(pos + 1);
+        if (!channel_name.empty() && channel_name[0] == '#') {
+            if (channels.find(channel_name) != channels.end()) {
+                // Channel exists, add the client to the channel
+                Channel& channel = channels[channel_name];
+                if (channel.addClient(client_fd)) {
+                    std::string response = ":" + clients[client_fd].getNickname() + " JOIN " + channel_name + "\r\n";
+                    send(client_fd, response.c_str(), response.length(), 0);
+                    channel.broadcastMessage(response, client_fd);  // Inform others
+                } else {
+                    std::string errorMsg = "ERROR: You are already in the channel\r\n";
+                    send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
+                }
+            } else {
+                // Channel does not exist, create it and make the client an operator
+                channels.insert(std::make_pair(channel_name, Channel(channel_name, client_fd)));
+                std::cout << "Channel created: " << channel_name << " with operator: " << client_fd << std::endl;
+
+                std::string response = ":" + clients[client_fd].getNickname() + " JOIN " + channel_name + "\r\n";
+                send(client_fd, response.c_str(), response.length(), 0);
+            }
         } else {
             std::string errorMsg = "ERROR :Invalid channel name\r\n";
             send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
@@ -258,7 +278,14 @@ void Server::handleJoinCommand(int client_fd, const std::string& message) {
     }
 }
 
+
+
 void Server::handlePrivMsgCommand(int client_fd, const std::string& message) {
+    std::string error_msg;
+    if (!clients[client_fd].checkAttributes(error_msg)) {
+        send(client_fd, error_msg.c_str(), error_msg.length(), 0);
+        return ;
+    }
     size_t pos = message.find(' ');
     size_t colon_pos = message.find(" :");
 
@@ -268,7 +295,8 @@ void Server::handlePrivMsgCommand(int client_fd, const std::string& message) {
 
         if (target[0] == '#') {
             if (channels.find(target) != channels.end()) {
-                for (std::vector<int>::iterator it = channels[target].begin(); it != channels[target].end(); ++it) {
+                const std::vector<int>& members = channels[target].getMembers();
+                for (std::vector<int>::const_iterator it = members.begin(); it != members.end(); ++it) {
                     if (*it != client_fd) {
                         std::string response = ":" + clients[client_fd].getNickname() + " PRIVMSG " + target + " :" + msgContent + "\r\n";
                         send(*it, response.c_str(), response.length(), 0);

@@ -111,3 +111,24 @@ std::string Client::getUniqueNickname(const std::string& nickname, const std::ma
         }
     }
 }
+
+bool Client::checkAttributes(std::string& error_msg) const {
+
+    if (!this->_authenticated) {
+        error_msg = "ERROR :You need to authenticate first!\r\n";
+        return false;
+    }
+
+    if (this->_nickname.empty()) {
+        error_msg = "ERROR :You must set a nickname before proceeding\r\n";
+        return false;
+    }
+
+    if (this->_username.empty()) {
+        error_msg = "ERROR :You must set a username before proceeding\r\n";
+        return false;
+    }
+
+    return true;
+}
+

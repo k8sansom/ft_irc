@@ -8,6 +8,8 @@
 #include <ctime>
 #include <sstream> 
 
+#include "Channel.hpp"
+
 class Client {
 public:
     Client();
@@ -32,6 +34,7 @@ public:
     std::string sanitizeNickname(const std::string& nickname) const;
     std::string getUniqueNickname(const std::string& nickname, const std::map<int, Client>& clients) const;
 
+    bool checkAttributes(std::string& error_msg) const;
 
 private:
     int 		_fd;

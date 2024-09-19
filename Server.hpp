@@ -11,8 +11,10 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <poll.h>
+#include <utility>
 
 #include "Client.hpp"
+#include "Channel.hpp"
 
 bool isValidPassword(const std::string& password);
 
@@ -22,7 +24,7 @@ public:
     ~Server();
 
     std::map<int, Client>& getClients();
-    std::map<std::string, std::vector<int> >& getChannels();
+    std::map<std::string, Channel>& getChannels();
     void pollClients();
     
 private:
@@ -30,9 +32,8 @@ private:
     int port;
     std::string password;
     sockaddr_in server_address;
-
+    std::map<std::string, Channel> channels;
     std::map<int, Client> clients;
-    std::map<std::string, std::vector<int> > channels;
 
     // Socket setup and management
     void setupSocket();

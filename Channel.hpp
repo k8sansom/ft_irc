@@ -1,6 +1,11 @@
+#ifndef CHANNEL_HPP
+#define CHANNEL_HPP
+
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <sys/socket.h>
+#include <iostream>
 
 class Channel {
 private:
@@ -9,16 +14,18 @@ private:
 	int					_operator_fd;
 
 public:
-    Channel(const std::string& channelName);
+    Channel();
+    Channel(const std::string& channelName, int operator_fd);
 	~Channel();
     const std::string& getName() const;
-    bool addClient(int client_fd);
-	// Remove a client from the channel
-    void removeClient(int client_fd);
-	// Check if the channel is empty
-    bool isEmpty() const;
-	// make client operator
+    const std::vector<int>& getMembers() const;
 
-    // Broadcast a message to all members except the sender
+    bool addClient(int client_fd);
+    void removeClient(int client_fd);
+    bool isEmpty() const;
+    bool isOperator(int client_fd) const;
     void broadcastMessage(const std::string& message, int sender_fd);
+
 };
+
+#endif
