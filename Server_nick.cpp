@@ -10,8 +10,7 @@ bool sanitizeNickname(int client_fd, std::string& nick, std::string& err_msg);
 
 bool Server::validateFormat(int client_fd, const std::string& message) {
     if (!isCommandFormatValid(message, "NICK")) {
-        std::string err_msg = "USAGE: NICK <nickname>.\r\n";
-        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
+        sendError(client_fd, ERR_NEEDMOREPARAMS, "NICK", "Usage: NICK <nickname>");
         return false;
     }
     return true;
@@ -19,8 +18,7 @@ bool Server::validateFormat(int client_fd, const std::string& message) {
 
 bool Server::checkAlreadySet(int client_fd, const std::string& nick) {
     if (clients[client_fd].getNickname() == nick) {
-        std::string err_msg = "NOTICE :This nickname is already set\r\n";
-        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
+        sendError(client_fd, ERR_NICKNAMEINUSE, nick, "This nickname is already set.");
         return true;
     }
     return false;
@@ -43,7 +41,7 @@ bool Server::sanitizeNickname(int client_fd, std::string& nick, std::string& err
 
 bool Server::checkUnique(int client_fd, std::string& nick, std::string& err_msg) {
     if (!clients[client_fd].isUniqueNickname(nick, clients, err_msg)) {
-        send(client_fd, err_msg.c_str(), err_msg.length(), 0);
+        sendError(client_fd, ERR_NICKNAMEINUSE, nick, err_msg);
         std::string u_nick = clients[client_fd].getUniqueNickname(nick, clients);
         clients[client_fd].setNickname(u_nick);
         std::cout << "Client " << client_fd << " set nickname to: " << u_nick << std::endl;
