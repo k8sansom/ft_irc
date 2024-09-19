@@ -19,7 +19,7 @@ std::map<std::string, std::vector<int> >& Server::getChannels() {
 void Server::setupSocket() {
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if (server_socket < 0) {
-        throw std::runtime_error("Failed to create socket");
+        throw std::runtime_error("ERROR: Failed to create socket");
     }
 
     int opt = 1;
@@ -33,13 +33,13 @@ void Server::bindSocket() {
     server_address.sin_port = htons(port);
 
     if (bind(server_socket, (sockaddr*)&server_address, sizeof(server_address)) < 0) {
-        throw std::runtime_error("Failed to bind socket");
+        throw std::runtime_error("ERROR: Failed to bind socket");
     }
 }
 
 void Server::listenSocket() {
     if (listen(server_socket, 10) < 0) {
-        throw std::runtime_error("Failed to listen on socket");
+        throw std::runtime_error("ERROR: Failed to listen on socket");
     }
     std::cout << "Server listening on port " << port << std::endl;
 }
@@ -50,7 +50,7 @@ void Server::acceptClient() {
 
     int client_fd = accept(server_socket, (sockaddr*)&client_address, &client_len);
     if (client_fd < 0) {
-        std::cerr << "Failed to accept client connection" << std::endl;
+        std::cerr << "ERROR: Failed to accept client connection" << std::endl;
         return ;
     }
 
@@ -68,18 +68,19 @@ void Server::pollClients() {
     server_fd.events = POLLIN;
     fds.push_back(server_fd);
     
+    std::cout << "List of clients: " << std::endl; 
     for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
         pollfd client_fd;
         client_fd.fd = it->first;
         client_fd.events = POLLIN;
         fds.push_back(client_fd);
-        std::cout << it->second.getNickname() << ":" << std::endl;
+        std::cout << it->second.getNickname() << std::endl;
     }
     std::cout << "Number of clients: " << clients.size() << std::endl; 
     
     int ret = poll(fds.data(), fds.size(), -1);
     if (ret < 0) {
-        std::cerr << "Poll error" << std::endl;
+        std::cerr << "ERROR: Poll error" << std::endl;
         return;
     }
 
@@ -96,7 +97,7 @@ void Server::pollClients() {
 
 void Server::handleClientMessage(int client_fd) {
     if (clients.find(client_fd) == clients.end()) {
-        std::cerr << "Client not found in the list" << std::endl;
+        std::cerr << "ERROR: Client not found in the list" << std::endl;
         return;
     }
 
@@ -108,13 +109,18 @@ void Server::handleClientMessage(int client_fd) {
         std::string message = *it;
         if (message.empty()) 
             continue;
-
+        if (message.rfind("CAP", 0) == 0) {
+            continue ;
+        }
         std::cout << "Received from client " << client_fd << ": " << message << std::endl;
 
         if (!clients[client_fd].isAuthenticated() && message.rfind("PASS", 0) != 0) {
-            std::string auth_response = "ERROR :You need to authenticate first!\r\n";
+            std::string auth_response = "ERROR: You need to authenticate first!\r\n";
             send(client_fd, auth_response.c_str(), auth_response.length(), 0);
-            continue;
+            close(client_fd);
+            clients.erase(client_fd);
+            std::cout << "Client " << client_fd << " disconnected" << std::endl;
+            break ;
         }
 
         if (message.rfind("PASS", 0) == 0) {
@@ -128,7 +134,7 @@ void Server::handleClientMessage(int client_fd) {
         } else if (message.rfind("PRIVMSG", 0) == 0) {
             handlePrivMsgCommand(client_fd, message);
         } else {
-            std::string wrong_command = "ERROR :Unknown command\r\n";
+            std::string wrong_command = "ERROR: Unknown command\r\n";
             send(client_fd, wrong_command.c_str(), wrong_command.length(), 0);
         }
     }
@@ -139,12 +145,12 @@ std::vector<std::string> Server::receiveMessage(int client_fd) {
     int bytes_received = recv(client_fd, buffer, sizeof(buffer) - 1, 0);
 
     if (bytes_received < 0) {
-        std::cerr << "Failed to receive message from client " << client_fd << std::endl;
+        std::cerr << "ERROR: Failed to receive message from client " << client_fd << std::endl;
         return std::vector<std::string>();;
     } else if (bytes_received == 0) {
         close(client_fd);
         clients.erase(client_fd);
-        std::cout << "Client " << client_fd << " disconnected" << std::endl;
+        std::cout << "Client " << client_fd << " disconnected due to incorrect password" << std::endl;
         return std::vector<std::string>();;
     }
 
