@@ -74,7 +74,10 @@ std::string Client::sanitizeNickname(const std::string& nickname, std::string &e
     }
 
     if (sanitized_nickname.empty()) {
-        sanitized_nickname = "user" + std::to_string(std::rand() % 1000);
+		std::ostringstream oss;
+		oss << (std::rand() % 1000);
+    	std::string sanitized_nickname = "user" + oss.str();  // Concatenate with "user"
+        // sanitized_nickname = "user" + std::to_string(std::rand() % 1000);
         err_msg += "Your nickname was invalid. Setting it to a default: " + sanitized_nickname + "\r\n";
     }
 

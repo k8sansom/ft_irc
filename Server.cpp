@@ -122,7 +122,9 @@ bool Server::isCommandFormatValid(const std::string& message, const std::string&
 }
 
 void Server::sendError(int client_fd, int error_code, const std::string& target, const std::string& message) {
-    std::string error_msg = ":" + std::to_string(error_code) + " " + target + " :" + message + "\r\n";
+	std::ostringstream oss;
+	oss << error_code;
+    std::string error_msg = ":" + oss.str() + " " + target + " :" + message + "\r\n";
     send(client_fd, error_msg.c_str(), error_msg.length(), 0);
 }
 
