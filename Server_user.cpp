@@ -19,7 +19,7 @@ void Server::handleUserCommand(int client_fd, const std::string& message) {
 
     std::vector<std::string> params = extractUserParams(message);
     if (params.size() < 4 || !validateUserCommand(client_fd, params)) {
-        sendError(client_fd, ERR_NEEDMOREPARAMS, "*", "Not enough parameters");
+        sendError(client_fd, ERR_NEEDMOREPARAMS, "*", "USAGE: USER <username> <whatever> <servername> :<realname>");
         return;
     }
 
@@ -56,13 +56,14 @@ bool Server::validateUserCommand(int client_fd, const std::vector<std::string>& 
         return false;
     }
 
-    std::string second_param = params[1];
-    std::string third_param = params[2];
+    std::string whatever_param = params[1];
+    std::string servername_param = params[2];
 
-    if (second_param != "0" || third_param != "*") {
-        sendError(client_fd, ERR_NEEDMOREPARAMS, "*", "USAGE: USER <username> 0 * :<realname>");;
+    if (whatever_param.empty() || servername_param.empty()) {
+        sendError(client_fd, ERR_NEEDMOREPARAMS, "*", "USAGE: USER <username> <whatever> <servername> :<realname>");
         return false;
     }
+
 
     return true;
 }
@@ -82,6 +83,3 @@ void Server::sendUsernameConfirmation(int client_fd, const std::string& username
     std::string confirmation = "Your username is set to " + username + " and your realname is " + realname + "\r\n";
     send(client_fd, confirmation.c_str(), confirmation.length(), 0);
 }
-
-
-
