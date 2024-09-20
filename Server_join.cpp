@@ -1,4 +1,5 @@
 #include "Server.hpp"
+#include "Channel.hpp"
 
 void handleJoinCommand(int client_fd, const std::string& message);
 std::vector<std::string> extractParams(const std::string& message);
@@ -28,24 +29,26 @@ void Server::handleJoinCommand(int client_fd, const std::string& message) {
         return;
     }
 
-    std::vector<std::string> channels = split(params[0], ',');
+    // Use a different name for the list of channel names
+    std::vector<std::string> requestedChannels = split(params[0], ',');
     std::vector<std::string> keys = params.size() > 1 ? split(params[1], ',') : std::vector<std::string>();
 
-    for (size_t i = 0; i < channels.size(); ++i) {
-        std::string channel_name = channels[i];
+    for (size_t i = 0; i < requestedChannels.size(); ++i) {
+        std::string channel_name = requestedChannels[i];
         std::string key = (i < keys.size()) ? keys[i] : "";
 
         if (!isValidChannelName(channel_name)) {
             sendError(client_fd, ERR_NOSUCHCHANNEL, channel_name, "Invalid channel name.");
             continue;
         }
-
-        if (std::find(channels.begin(), channels.end(), channel_name) != channels.end()) {
+        // Check if the channel exists in the channels map
+        std::map<std::string, Channel>::iterator it = channels.find(channel_name);
+        if (it != channels.end()) {
             joinExistingChannel(client_fd, channel_name, key);
         } else {
             createAndJoinChannel(client_fd, channel_name, key);
         }
-    }
+	}
 }
 
 std::vector<std::string> Server::extractParams(const std::string& message) {

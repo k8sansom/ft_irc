@@ -1,6 +1,6 @@
 #include "Channel.hpp"
 
-Channel::Channel() : _name(""), _operator_fd(-1), _topic("") {}
+Channel::Channel() :  _name(""), _members(), _operator_fd(-1), _topic(""), _key("") {}
 
 Channel::Channel(const std::string& channelName, int operator_fd) 
     : _name(channelName), _operator_fd(operator_fd), _topic("") {
