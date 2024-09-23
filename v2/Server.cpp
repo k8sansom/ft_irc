@@ -50,7 +50,7 @@ void Server::handleClientMessage(int client_fd) {
             handleNickCommand(client_fd, message);
         } else if (message.rfind("USER", 0) == 0) {
             handleUserCommand(client_fd, message);
-        } else if (message.rfind("JOIN", 0) == 0 || message.rfind("/join", 0) == 0) {
+        } else if (message.rfind("JOIN", 0) == 0) {
             handleJoinCommand(client_fd, message);
         } else if (message.rfind("PRIVMSG", 0) == 0) {
             handlePrivMsgCommand(client_fd, message);
