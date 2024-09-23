@@ -1,19 +1,31 @@
 #ifndef CHANNEL_HPP
 #define CHANNEL_HPP
 
-#include <string>
 #include <vector>
+#include <string>
+#include <set>
 #include <algorithm>
+#include <sys/types.h>
 #include <sys/socket.h>
-#include <iostream>
+#include "Client.hpp"
 
 class Channel {
 private:
-    std::string         _name;
-    std::vector<int>    _members;
-    int                 _operator_fd;
-    std::string         _topic;
-    std::string         _key; 
+    std::string _name;
+    std::vector<int> _members;
+    int _operator_fd;
+    std::string _topic;
+    std::string _key; 
+    std::set<int> _invitedClients;
+    std::set<int> _operators;
+
+	struct Mode {
+		bool inviteOnly;
+		bool topicRestricted;
+		std::string channelKey;
+		int userLimit;
+	}_mode;
+
 
 public:
     Channel();
@@ -21,18 +33,24 @@ public:
     Channel(const std::string& channelName, int operator_fd, const std::string& key); 
     ~Channel();
 
+    // Getters
     const std::string& getName() const;
     const std::vector<int>& getMembers() const;
-    const std::string& getTopic() const;
-    void setTopic(const std::string& topic);
+    std::string getTopic() const;
+
+    // Setters
+    void setKey(const std::string& key);
+    void setTopic(Client& operatorClient, const std::string& newTopic);
+	// void setMode(Client& operatorClient, const std::string& modeFlags, const std::string& param);
 
     bool addClient(int client_fd);
     void removeClient(int client_fd);
     bool isEmpty() const;
     bool isOperator(int client_fd) const;
     void broadcastMessage(const std::string& message, int sender_fd);
-    void setKey(const std::string& key);
     bool canClientJoin(const std::string& key) const;
+    void kick(Client& operatorClient, Client& targetClient, const std::string& reason);
+    void invite(Client& operatorClient, Client& targetClient);
 };
 
 #endif

@@ -8,8 +8,6 @@
 #include <ctime>
 #include <sstream> 
 
-#include "Channel.hpp"
-
 class Client {
 public:
     Client();

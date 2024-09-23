@@ -84,8 +84,6 @@ std::string Client::sanitizeNickname(const std::string& nickname, std::string &e
     return sanitized_nickname;
 }
 
-
-
 bool Client::isUniqueNickname(const std::string& nickname, const std::map<int, Client>& clients, std::string &err_msg) const {
     std::map<int, Client>::const_iterator it;
 	for (it = clients.begin(); it != clients.end(); ++it) {

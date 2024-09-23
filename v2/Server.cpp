@@ -50,11 +50,19 @@ void Server::handleClientMessage(int client_fd) {
             handleNickCommand(client_fd, message);
         } else if (message.rfind("USER", 0) == 0) {
             handleUserCommand(client_fd, message);
-        } else if (message.rfind("JOIN", 0) == 0) {
+        } else if (message.rfind("JOIN", 0) == 0 || message.rfind("/join", 0) == 0) {
             handleJoinCommand(client_fd, message);
         } else if (message.rfind("PRIVMSG", 0) == 0) {
             handlePrivMsgCommand(client_fd, message);
-        } else {
+        }  else if (message.rfind("KICK", 0) == 0) {
+            handleKickCommand(client_fd, message);
+        } /*else if (message.rfind("INVITE", 0) == 0) {
+            handleInviteCommand(client_fd, message);
+        } else if (message.rfind("MODE", 0) == 0) {
+            handleModeCommand(client_fd, message);
+        } else if (message.rfind("TOPIC", 0) == 0) {
+            handleTopicCommand(client_fd, message);
+        } */else {
             std::string wrong_command = "ERROR: Unknown command\r\n";
             send(client_fd, wrong_command.c_str(), wrong_command.length(), 0);
         }

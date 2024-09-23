@@ -85,6 +85,9 @@ private:
     void createAndJoinChannel(int client_fd, const std::string& channel_name, const std::string& key);
     void sendJoinConfirmation(int client_fd, const std::string& channel_name);
     void sendChannelInfo(int client_fd, const std::string& channel_name);
+
+	//Server_kick
+	void handleKickCommand(int client_fd, const std::string& message);
 };
 
 #endif
