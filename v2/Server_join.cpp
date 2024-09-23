@@ -94,6 +94,12 @@ void Server::createAndJoinChannel(int client_fd, const std::string& channel_name
     channels.insert(std::make_pair(channel_name, Channel(channel_name, client_fd, key)));
     std::cout << "Channel created: " << channel_name << " with operator: " << client_fd << std::endl;
 
+	std::cout << "Available channels after creation: ";
+	for (std::map<std::string, Channel>::iterator it = channels.begin(); it != channels.end(); ++it) {
+		std::cout << it->first << " ";
+	}
+	std::cout << std::endl;
+	
     sendJoinConfirmation(client_fd, channel_name);
     sendChannelInfo(client_fd, channel_name);
 }

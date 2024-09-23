@@ -88,6 +88,7 @@ private:
 
 	//Server_kick
 	void handleKickCommand(int client_fd, const std::string& message);
+	int findClientFdByNickname(const std::string& nickname);
 };
 
 #endif
