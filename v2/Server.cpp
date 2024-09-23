@@ -71,7 +71,7 @@ std::vector<std::string> Server::receiveMessage(int client_fd) {
     } else if (bytes_received == 0) {
         close(client_fd);
         clients.erase(client_fd);
-        std::cout << "Client " << client_fd << " disconnected due to incorrect password" << std::endl;
+        std::cout << "Client " << client_fd << " disconnected" << std::endl;
         return std::vector<std::string>();
     }
 
