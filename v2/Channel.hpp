@@ -18,13 +18,10 @@ private:
     std::string _key; 
     std::set<int> _invitedClients;
     std::set<int> _operators;
-
-	struct Mode {
-		bool inviteOnly;
-		bool topicRestricted;
-		std::string channelKey;
-		int userLimit;
-	}_mode;
+	bool _inviteOnly;
+	bool _topicRestricted;
+	bool _keyReq;
+	int _userLimit;
 
 
 public:
@@ -37,6 +34,7 @@ public:
     const std::string& getName() const;
     const std::vector<int>& getMembers() const;
     std::string getTopic() const;
+	bool getMode(const std::string mode) const;
 
     // Setters
     void setKey(const std::string& key);

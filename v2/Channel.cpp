@@ -1,9 +1,10 @@
 #include "Channel.hpp"
 
 Channel::Channel() : _name(""), _operator_fd(-1), _topic(""), _key("") {
-    _mode.inviteOnly = false;
-    _mode.topicRestricted = false;
-    _mode.userLimit = 0;
+	_inviteOnly = false;
+	_topicRestricted = false;
+	_keyReq = false;
+	_userLimit = 0;
 }
 
 Channel::Channel(const std::string& channelName, int operator_fd) 
@@ -24,6 +25,18 @@ const std::string& Channel::getName() const {
 
 const std::vector<int>& Channel::getMembers() const {
     return _members;
+}
+
+bool Channel::getMode(const std::string mode) const {
+	if (mode == "topicRestricted") {
+		return _topicRestricted;
+	} else if (mode == "inviteOnly") {
+		return _inviteOnly;
+	} else if (mode == "keyReq") {
+		return _keyReq;
+	}  else {
+		return false;
+	}
 }
 
 bool Channel::addClient(int client_fd) {
@@ -98,7 +111,7 @@ void Channel::kick(Client& operatorClient, Client& targetClient, const std::stri
 }
 
 void Channel::invite(Client& operatorClient, Client& targetClient) {
-    if (!isOperator(operatorClient.getFd()) && _mode.inviteOnly) {
+    if (!isOperator(operatorClient.getFd())) {
         std::cout << "INVITE: " << operatorClient.getNickname() << " does not have permission to invite users." << std::endl;
         return;
     }
@@ -155,7 +168,7 @@ void Channel::invite(Client& operatorClient, Client& targetClient) {
 // }
 
 void Channel::setTopic(Client& operatorClient, const std::string& newTopic) {
-    if (_mode.topicRestricted && !isOperator(operatorClient.getFd())) {
+    if (getMode("topicRestricted") && !isOperator(operatorClient.getFd())) {
         std::cout << "TOPIC: " << operatorClient.getNickname() << " does not have permission to change the topic.\r\n";
         return;
     }

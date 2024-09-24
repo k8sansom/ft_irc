@@ -124,6 +124,6 @@ void Server::sendChannelInfo(int client_fd, const std::string& channel_name) {
     user_list += "\r\n";
     send(client_fd, user_list.c_str(), user_list.length(), 0);
 
-    std::string end_of_names = channel_name + clients[client_fd].getNickname() + "\r\n";
+    std::string end_of_names = channel_name + ": " + clients[client_fd].getNickname() + " is now a channel member\r\n";
     send(client_fd, end_of_names.c_str(), end_of_names.length(), 0);
 }
