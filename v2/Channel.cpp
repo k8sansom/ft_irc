@@ -54,11 +54,26 @@ bool Channel::isOperator(int client_fd) const {
 }
 
 void Channel::broadcastMessage(const std::string& message, int sender_fd) {
+    std::cout << "Broadcasting message: " << message << " from sender: " << sender_fd << std::endl;
+    
+    // Iterate over all members in the channel
     for (std::vector<int>::iterator it = _members.begin(); it != _members.end(); ++it) {
-        if (*it != sender_fd) {
-            if (send(*it, message.c_str(), message.length(), 0) < 0) {
-                std::cerr << "Failed to send message to client " << *it << std::endl;
-            }
+        int member_fd = *it; 
+        // Skip sending the message to the sender
+        if (member_fd == sender_fd) {
+            continue;
+        }
+
+        // Attempt to send the message
+        ssize_t bytes_sent = send(member_fd, message.c_str(), message.length(), 0);
+
+        // Check if the send was successful
+        if (bytes_sent < 0) {
+            std::cerr << "Error: Failed to send message to client " << member_fd << std::endl;
+
+            // Optional: You may want to remove the member from the channel if the send fails consistently
+        } else {
+            std::cout << "Message sent to client " << member_fd << ": " << bytes_sent << " bytes" << std::endl;
         }
     }
 }
@@ -69,7 +84,7 @@ bool Channel::canClientJoin(const std::string& key) const {
 
 void Channel::kick(Client& operatorClient, Client& targetClient, const std::string& reason) {
     if (!isOperator(operatorClient.getFd())) {
-        std::cout << operatorClient.getNickname() << ": You don't have operator privileges to kick users." << std::endl;
+        std::cout << "KICK: " << operatorClient.getNickname() << " does not have permission to KICK" << std::endl;
         return;
     }
 
@@ -84,7 +99,7 @@ void Channel::kick(Client& operatorClient, Client& targetClient, const std::stri
 
 void Channel::invite(Client& operatorClient, Client& targetClient) {
     if (!isOperator(operatorClient.getFd()) && _mode.inviteOnly) {
-        std::cout << "INVITE: " << operatorClient.getNickname() << ": You don't have permission to invite users." << std::endl;
+        std::cout << "INVITE: " << operatorClient.getNickname() << " does not have permission to invite users." << std::endl;
         return;
     }
 
@@ -141,7 +156,7 @@ void Channel::invite(Client& operatorClient, Client& targetClient) {
 
 void Channel::setTopic(Client& operatorClient, const std::string& newTopic) {
     if (_mode.topicRestricted && !isOperator(operatorClient.getFd())) {
-        std::cout << "TOPIC: You don't have permission to change the topic.\r\n";
+        std::cout << "TOPIC: " << operatorClient.getNickname() << " does not have permission to change the topic.\r\n";
         return;
     }
     _topic = newTopic;

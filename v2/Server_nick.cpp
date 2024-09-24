@@ -54,9 +54,10 @@ bool Server::checkUnique(int client_fd, std::string& nick, std::string& err_msg)
 
 void Server::setNickname(int client_fd, const std::string& nick) {
     clients[client_fd].authenticate();
-    clients[client_fd].setNickname(nick);
-    std::cout << "Client " << client_fd << " set nickname to: " << nick << std::endl;
-    std::string nick_set = "Your nick is set to " + nick + "\r\n";
+	std::string final_nick = trim(nick);
+    clients[client_fd].setNickname(final_nick);
+    std::cout << "Client " << client_fd << " set nickname to: " << final_nick << std::endl;
+    std::string nick_set = "Your nick is set to " + final_nick + "\r\n";
     send(client_fd, nick_set.c_str(), nick_set.length(), 0);
 }
 

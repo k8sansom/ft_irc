@@ -54,6 +54,7 @@ private:
     bool isCommandFormatValid(const std::string& message, const std::string& command);
     void sendError(int client_fd, int error_code, const std::string& target, const std::string& message);
     std::vector<std::string> split(const std::string& str, char delimiter);
+	std::string trim(const std::string& str);
 
     //Server_nick
     bool validateFormat(int client_fd, const std::string& message);
@@ -86,9 +87,11 @@ private:
     void sendJoinConfirmation(int client_fd, const std::string& channel_name);
     void sendChannelInfo(int client_fd, const std::string& channel_name);
 
-	//Server_kick
+	//Server_opcmds
 	void handleKickCommand(int client_fd, const std::string& message);
-	int findClientFdByNickname(const std::string& nickname);
+	void handleInviteCommand(int client_fd, const std::string& message);
+	void handleModeCommand(int client_fd, const std::string& message);
+	void handleTopicCommand(int client_fd, const std::string& message);
 };
 
 #endif

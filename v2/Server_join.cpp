@@ -34,7 +34,7 @@ void Server::handleJoinCommand(int client_fd, const std::string& message) {
     std::vector<std::string> keys = params.size() > 1 ? split(params[1], ',') : std::vector<std::string>();
 
     for (size_t i = 0; i < requestedChannels.size(); ++i) {
-        std::string channel_name = requestedChannels[i];
+        std::string channel_name = trim(requestedChannels[i]);
         std::string key = (i < keys.size()) ? keys[i] : "";
 
         if (!isValidChannelName(channel_name)) {
@@ -124,6 +124,6 @@ void Server::sendChannelInfo(int client_fd, const std::string& channel_name) {
     user_list += "\r\n";
     send(client_fd, user_list.c_str(), user_list.length(), 0);
 
-    std::string end_of_names = "366 " + clients[client_fd].getNickname() + " " + channel_name + " :End of /NAMES list\r\n";
+    std::string end_of_names = channel_name + clients[client_fd].getNickname() + "\r\n";
     send(client_fd, end_of_names.c_str(), end_of_names.length(), 0);
 }

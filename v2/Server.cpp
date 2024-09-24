@@ -16,6 +16,14 @@ std::map<std::string, Channel>& Server::getChannels() {
     return channels;
 }
 
+std::string Server::trim(const std::string& str) {
+    size_t first = str.find_first_not_of(" \n\r\t");
+    if (first == std::string::npos)
+        return "";
+    size_t last = str.find_last_not_of(" \n\r\t");
+    return str.substr(first, last - first + 1);
+}
+
 void Server::handleClientMessage(int client_fd) {
     if (clients.find(client_fd) == clients.end()) {
         std::cerr << "ERROR: Client not found in the list" << std::endl;
@@ -56,13 +64,13 @@ void Server::handleClientMessage(int client_fd) {
             handlePrivMsgCommand(client_fd, message);
         }  else if (message.rfind("KICK", 0) == 0) {
             handleKickCommand(client_fd, message);
-        } /*else if (message.rfind("INVITE", 0) == 0) {
+        } else if (message.rfind("INVITE", 0) == 0) {
             handleInviteCommand(client_fd, message);
-        } else if (message.rfind("MODE", 0) == 0) {
+        } /*else if (message.rfind("MODE", 0) == 0) {
             handleModeCommand(client_fd, message);
-        } else if (message.rfind("TOPIC", 0) == 0) {
+        } */else if (message.rfind("TOPIC", 0) == 0) {
             handleTopicCommand(client_fd, message);
-        } */else {
+        } else {
             std::string wrong_command = "ERROR: Unknown command\r\n";
             send(client_fd, wrong_command.c_str(), wrong_command.length(), 0);
         }
@@ -132,7 +140,7 @@ bool Server::isCommandFormatValid(const std::string& message, const std::string&
 void Server::sendError(int client_fd, int error_code, const std::string& target, const std::string& message) {
 	std::ostringstream oss;
 	oss << error_code;
-    std::string error_msg = ":" + oss.str() + " " + target + " :" + message + "\r\n";
+    std::string error_msg = oss.str() + " " + target + ": " + message + "\r\n";
     send(client_fd, error_msg.c_str(), error_msg.length(), 0);
 }
 

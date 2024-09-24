@@ -5,7 +5,7 @@ SRCS = 	Client.cpp \
 		Server.cpp \
 		Server_connection.cpp \
 		Server_join.cpp \
-		Server_kick.cpp \
+		Server_opcmds.cpp \
 		Server_nick.cpp \
 		Server_privmsg.cpp \
 		Server_user.cpp \

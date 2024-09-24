@@ -24,7 +24,7 @@ void Server::handleUserCommand(int client_fd, const std::string& message) {
     }
 
     std::string username = sanitizeUsername(params[0]);
-    std::string realname = params[3];
+    std::string realname = trim(params[3]);
 
     clients[client_fd].setUsername(username);
     clients[client_fd].setRealname(realname);
@@ -63,8 +63,6 @@ bool Server::validateUserCommand(int client_fd, const std::vector<std::string>& 
         sendError(client_fd, ERR_NEEDMOREPARAMS, "*", "USAGE: USER <username> <whatever> <servername> :<realname>");
         return false;
     }
-
-
     return true;
 }
 
