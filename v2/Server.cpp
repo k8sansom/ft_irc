@@ -66,9 +66,9 @@ void Server::handleClientMessage(int client_fd) {
             handleKickCommand(client_fd, message);
         } else if (message.rfind("INVITE", 0) == 0) {
             handleInviteCommand(client_fd, message);
-        } /*else if (message.rfind("MODE", 0) == 0) {
+        } else if (message.rfind("MODE", 0) == 0) {
             handleModeCommand(client_fd, message);
-        } */else if (message.rfind("TOPIC", 0) == 0) {
+        } else if (message.rfind("TOPIC", 0) == 0) {
             handleTopicCommand(client_fd, message);
         } else {
             std::string wrong_command = "ERROR: Unknown command\r\n";

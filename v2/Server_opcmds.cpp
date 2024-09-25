@@ -173,16 +173,19 @@ void Server::handleTopicCommand(int client_fd, const std::string& message) {
     }
     new_topic = trim(new_topic);
 
-	if (channel.getMode("topicRestricted") && !channel.isOperator(client_fd)) {
-        sendError(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to change topic.");
-        return;
-    }
+	if (channel.getMode("topicRestricted")) {
+			std::cout <<"this is coming back true?!" <<std::endl;
+			if (!channel.isOperator(client_fd)) {
+        		sendError(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to change topic.");
+        		return;
+    		}
+	}
 
 	// Perform the invite (this could be a function in your Channel class)
     channel.setTopic(clients[client_fd], new_topic);
 
     // Optionally, send a confirmation to the client who changed the topic
-    std::string confirmation_message = channel_name + ": You changed the topic to " + new_topic + "\r\n";
+    std::string confirmation_message = channel_name + ": You changed the topic to \"" + new_topic + "\"\r\n";
     send(client_fd, confirmation_message.c_str(), confirmation_message.length(), 0);
 }
 
