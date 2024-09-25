@@ -41,7 +41,10 @@ public:
     bool isEmpty() const;
     bool isOperator(int client_fd) const;
     void broadcastMessage(const std::string& message, int sender_fd);
-    bool canClientJoin(const std::string& key, int client_fd) const;
+    bool checkChannelKey(const std::string key) const;
+	bool checkInvite(int client_fd) const;
+	bool checkUserLimit(void) const;
+
 
 	//operator commands
     void kick(Client& targetClient, const std::string& reason);

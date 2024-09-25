@@ -87,7 +87,7 @@ void Channel::broadcastMessage(const std::string& message, int sender_fd) {
     }
 }
 
-bool Channel::canClientJoin(const std::string& key, int client_fd) const {
+bool Channel::checkChannelKey(const std::string key) const {
     // Check if the channel requires a key
     if (_keyReq) {
 		if (key != _key) {
@@ -95,6 +95,9 @@ bool Channel::canClientJoin(const std::string& key, int client_fd) const {
         	return false; // Channel is password protected, no key provided
 		}
     }
+	return true;
+}
+bool Channel::checkInvite(int client_fd) const {
     // Check if invite-only mode is active
     if (_inviteOnly) {
         // Check if the client_fd is on the invite list
@@ -103,6 +106,10 @@ bool Channel::canClientJoin(const std::string& key, int client_fd) const {
             return false; // Client is not invited
         }
     }
+	return true;
+}
+
+bool Channel::checkUserLimit(void) const {
 	if (_userLimit > 0) {
         // Get the current number of members in the channel
         if (_members.size() >= _userLimit) {
