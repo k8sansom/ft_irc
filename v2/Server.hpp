@@ -47,7 +47,6 @@ private:
     // Client message handling
     void handleClientMessage(int client_fd);
     std::vector<std::string> receiveMessage(int client_fd);
-
     void handlePassCommand(int client_fd, const std::string& message);
 
     // Utils
@@ -90,8 +89,8 @@ private:
 	//Server_opcmds
 	void handleKickCommand(int client_fd, const std::string& message);
 	void handleInviteCommand(int client_fd, const std::string& message);
-	void handleModeCommand(int client_fd, const std::string& message);
 	void handleTopicCommand(int client_fd, const std::string& message);
+	void handleModeCommand(int client_fd, const std::string& message);
 };
 
 #endif

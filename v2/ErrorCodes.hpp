@@ -86,3 +86,6 @@
 
 // RPL_ENDOFNAMES (366): Marks the end of the user list.
 #define RPL_ENDOFNAMES 366
+
+// ERR_BADPARAM (484) : The parameters are not valid
+#define ERR_BADPARAM 484

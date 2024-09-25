@@ -124,48 +124,57 @@ void Channel::invite(Client& operatorClient, Client& targetClient) {
     }
 }
 
-// void Channel::setMode(Client& operatorClient, const std::string& modeFlags, const std::string& param) {
-//     if (!isOperator(operatorClient.getFd())) {
-//         std::cout << "MODE: You don't have permission to set the mode." << std::endl;
-//         return;
-//     }
+void Channel::setMode(Client& operatorClient, const char flag, const std::string& param) {
+    if (!isOperator(operatorClient.getFd())) {
+        std::cout << "MODE: User doesn't have permission to set the mode." << std::endl;
+        return;
+    }
 
-//     for (size_t i = 0; i < modeFlags.length(); ++i) {
-//     	char flag = modeFlags[i];
-//         switch (flag) {
-//             case 'i':
-//                 _mode.inviteOnly = !_mode.inviteOnly;
-//                 std::cout << "MODE: Invite-only mode " << (_mode.inviteOnly ? "enabled" : "disabled") << std::endl;
-//                 break;
-//             case 't':
-//                 _mode.topicRestricted = !_mode.topicRestricted;
-//                 std::cout << "MODE: Topic-restriction " << (_mode.topicRestricted ? "enabled" : "disabled") << std::endl;
-//                 break;
-//             case 'k':
-//                 _mode.channelKey = param;
-//                 std::cout << "MODE: Channel key set to: " << param << std::endl;
-//                 break;
-//             case 'l':
-//                 std::stringstream ss1(param);
-// 				ss1 >> _mode.userLimit;
-//                 std::cout << "MODE: User limit set to: " << _mode.userLimit << std::endl;
-//                 break;
-//             case 'o':
-//                 std::stringstream ss2(param);
-// 				ss1 >> clientFd;
-//                 if (std::find(_members.begin(), _members.end(), clientFd) != _members.end()) {
-//                     _operators.insert(clientFd);  // Grant operator privilege
-//                     std::cout << "MODE: Client with fd " << clientFd << " is now an operator." << std::endl;
-//                 } else {
-//                     std::cout << "MODE: No such client found." << std::endl;
-//                 }
-//                 break;
-//             default:
-//                 std::cout << "MODE: Unknown mode flag." << std::endl;
-//                 break;
-//         }
-//     }
-// }
+    switch (flag) {
+        case 'i':  // Invite-only mode
+            _inviteOnly = !_inviteOnly;  // Toggle invite-only mode
+            std::cout << "MODE: Invite-only mode " << (_inviteOnly ? "enabled" : "disabled") << std::endl;
+            break;
+
+        case 't':  // Topic restriction mode
+            _topicRestricted = !_topicRestricted;  // Toggle topic restriction mode
+            std::cout << "MODE: Topic-restricted mode " << (_topicRestricted ? "enabled" : "disabled") << std::endl;
+            break;
+
+        case 'k':  // Set channel key
+            _key = param;  // Set the key directly
+            std::cout << "MODE: Channel key set to: " << _key << std::endl;
+            break;
+
+        case 'l':  // Set user limit
+            {
+                std::stringstream ss1(param);  // Initialize within the scope
+                ss1 >> _userLimit;  // Set the user limit
+                std::cout << "MODE: User limit set to: " << _userLimit << std::endl;
+            }
+            break;
+
+        case 'o': {  // Grant operator privileges
+            int clientFd;
+            std::stringstream ss2(param);
+            if (ss2 >> clientFd) {
+                if (std::find(_members.begin(), _members.end(), clientFd) != _members.end()) {
+                    _operators.insert(clientFd);  // Grant operator privilege
+                    std::cout << "MODE: Client with fd " << clientFd << " is now an operator." << std::endl;
+                } else {
+                    std::cout << "MODE: Client fd " << clientFd << " is not a member of the channel." << std::endl;
+                }
+            } else {
+                std::cout << "MODE: Invalid client fd parameter." << std::endl;
+            }
+            break;
+        }
+
+        default:
+            std::cout << "MODE: Unknown mode flag." << std::endl;
+            break;
+    }
+}
 
 void Channel::setTopic(Client& operatorClient, const std::string& newTopic) {
     if (getMode("topicRestricted") && !isOperator(operatorClient.getFd())) {

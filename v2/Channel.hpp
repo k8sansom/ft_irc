@@ -39,7 +39,7 @@ public:
     // Setters
     void setKey(const std::string& key);
     void setTopic(Client& operatorClient, const std::string& newTopic);
-	// void setMode(Client& operatorClient, const std::string& modeFlags, const std::string& param);
+	void setMode(Client& operatorClient, const char flag, const std::string& param);
 
     bool addClient(int client_fd);
     void removeClient(int client_fd);
