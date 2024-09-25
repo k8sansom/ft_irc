@@ -21,7 +21,7 @@ private:
 	bool _inviteOnly;
 	bool _topicRestricted;
 	bool _keyReq;
-	int _userLimit;
+	unsigned long _userLimit;
 
 
 public:
@@ -36,19 +36,18 @@ public:
     std::string getTopic() const;
 	bool getMode(const std::string mode) const;
 
-    // Setters
-    void setKey(const std::string& key);
-    void setTopic(Client& operatorClient, const std::string& newTopic);
-	void setMode(Client& operatorClient, const char flag, const std::string& param);
-
     bool addClient(int client_fd);
     void removeClient(int client_fd);
     bool isEmpty() const;
     bool isOperator(int client_fd) const;
     void broadcastMessage(const std::string& message, int sender_fd);
-    bool canClientJoin(const std::string& key) const;
-    void kick(Client& operatorClient, Client& targetClient, const std::string& reason);
-    void invite(Client& operatorClient, Client& targetClient);
+    bool canClientJoin(const std::string& key, int client_fd) const;
+
+	//operator commands
+    void kick(Client& targetClient, const std::string& reason);
+    void invite(Client& targetClient);
+	void topic(const std::string& newTopic);
+	void mode(const char flag, const std::string& param);
 };
 
 #endif

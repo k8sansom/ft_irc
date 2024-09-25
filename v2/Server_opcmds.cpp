@@ -55,13 +55,13 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 
 		switch (flag) {
 			case 'i':  // Invite-only mode
-				channel.setMode(clients[client_fd], flag, "");
+				channel.mode(flag, "");
 				mode_message = channel_name + ": Invite-only mode " + (channel.getMode("inviteOnly") ? "enabled" : "disabled") + "\r\n";
 				send(client_fd, mode_message.c_str(), mode_message.length(), 0);
 				break;
 
 			case 't':  // Topic restriction mode
-				channel.setMode(clients[client_fd], flag, "");
+				channel.mode(flag, "");
 				mode_message = channel_name + ": Topic restriction mode " + (channel.getMode("topicRestricted") ? "enabled" : "disabled") + "\r\n";
 				send(client_fd, mode_message.c_str(), mode_message.length(), 0);
 				break;
@@ -71,7 +71,7 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 					sendError(client_fd, ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters to set the channel key.");
 					return;
 				}
-				channel.setMode(clients[client_fd], flag, parameters);
+				channel.mode(flag, parameters);
 				mode_message = channel_name + ": Channel key set to '" + parameters + "'\r\n";
 				send(client_fd, mode_message.c_str(), mode_message.length(), 0);
 				break;
@@ -81,7 +81,7 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 					sendError(client_fd, ERR_BADPARAM, "MODE", "User limit must be a valid non-negative integer.");
 					return;
 				}
-				channel.setMode(clients[client_fd], flag, parameters);
+				channel.mode(flag, parameters);
 				mode_message = channel_name + ": User limit set to " + parameters + "\r\n";
 				send(client_fd, mode_message.c_str(), mode_message.length(), 0);
 				break;
@@ -112,7 +112,7 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 				// Check if the target_fd is in the channel
 				const std::vector<int>& members = channel.getMembers();
 				if (std::find(members.begin(), members.end(), target_fd) != members.end()) {
-					channel.setMode(clients[client_fd], flag, parameters);
+					channel.mode(flag, parameters);
 					std::string mode_message = "MODE: Client " + target_nickname + " is now an operator.\r\n";
 					send(client_fd, mode_message.c_str(), mode_message.length(), 0);
 				} else {
@@ -174,7 +174,6 @@ void Server::handleTopicCommand(int client_fd, const std::string& message) {
     new_topic = trim(new_topic);
 
 	if (channel.getMode("topicRestricted")) {
-			std::cout <<"this is coming back true?!" <<std::endl;
 			if (!channel.isOperator(client_fd)) {
         		sendError(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to change topic.");
         		return;
@@ -182,7 +181,7 @@ void Server::handleTopicCommand(int client_fd, const std::string& message) {
 	}
 
 	// Perform the invite (this could be a function in your Channel class)
-    channel.setTopic(clients[client_fd], new_topic);
+    channel.topic(new_topic);
 
     // Optionally, send a confirmation to the client who changed the topic
     std::string confirmation_message = channel_name + ": You changed the topic to \"" + new_topic + "\"\r\n";
@@ -254,7 +253,7 @@ void Server::handleInviteCommand(int client_fd, const std::string& message) {
 		return;
 	}
 	// Perform the invite (this could be a function in your Channel class)
-    channel.invite(clients[client_fd], clients[target_fd]);
+    channel.invite(clients[target_fd]);
 
 	// Notify the target client about the invite
     std::string invite_message = clients[client_fd].getNickname() + " invited you to " + channel_name + "\r\n";
@@ -324,7 +323,7 @@ void Server::handleKickCommand(int client_fd, const std::string& message) {
     }
 
     // // Perform the kick
-    channel.kick(clients[client_fd], clients[target_fd], reason);
+    channel.kick(clients[target_fd], reason);
 
     // Notify the target about the kick
     std::string kick_message = channel_name + ": " + clients[client_fd].getNickname() + " kicked you out of " + channel_name + "\r\n";

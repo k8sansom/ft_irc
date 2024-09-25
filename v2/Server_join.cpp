@@ -75,8 +75,8 @@ bool Server::isValidChannelName(const std::string& name) {
 void Server::joinExistingChannel(int client_fd, const std::string& channel_name, const std::string& key) {
     Channel& channel = channels[channel_name];
 
-    if (!channel.canClientJoin(key)) {
-        sendError(client_fd, ERR_BADCHANNELKEY, channel_name, "Incorrect channel key.");
+    if (!channel.canClientJoin(key, client_fd)) {
+        sendError(client_fd, ERR_BADCHANNELKEY, channel_name, "Channel is invite only, key is incorrect, or a user limit has been reached.");
         return;
     }
 

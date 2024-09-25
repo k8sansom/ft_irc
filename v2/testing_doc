@@ -1,9 +1,0 @@
-testing irc:
-
-1. nc 127.0.0.1 13900
-2. PASS 1234
-3. NICK ksansom
-4. USER ksansom ksansom 0 : k s
-5. JOIN #test
-6. KICK #test ksansom
-

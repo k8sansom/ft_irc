@@ -54,10 +54,6 @@ void Channel::removeClient(int client_fd) {
     }
 }
 
-void Channel::setKey(const std::string& key) {
-    this->_key = key;
-}
-
 bool Channel::isEmpty() const {
     return _members.empty();
 }
@@ -91,16 +87,33 @@ void Channel::broadcastMessage(const std::string& message, int sender_fd) {
     }
 }
 
-bool Channel::canClientJoin(const std::string& key) const {
-    return (_key.empty() || _key == key);
+bool Channel::canClientJoin(const std::string& key, int client_fd) const {
+    // Check if the channel requires a key
+    if (_keyReq) {
+		if (key != _key) {
+        	std::cout << "Channel is password protected." << std::endl;
+        	return false; // Channel is password protected, no key provided
+		}
+    }
+    // Check if invite-only mode is active
+    if (_inviteOnly) {
+        // Check if the client_fd is on the invite list
+        if (_invitedClients.find(client_fd) == _invitedClients.end()) {
+            std::cout << "You are not invited to this channel." << std::endl;
+            return false; // Client is not invited
+        }
+    }
+	if (_userLimit > 0) {
+        // Get the current number of members in the channel
+        if (_members.size() >= _userLimit) {
+            std::cout << "User limit reached. Cannot join." << std::endl;
+            return false; // User limit has been reached
+        }
+    }
+    return true; // Client can join the channel
 }
 
-void Channel::kick(Client& operatorClient, Client& targetClient, const std::string& reason) {
-    if (!isOperator(operatorClient.getFd())) {
-        std::cout << "KICK: " << operatorClient.getNickname() << " does not have permission to KICK" << std::endl;
-        return;
-    }
-
+void Channel::kick(Client& targetClient, const std::string& reason) {
     std::vector<int>::iterator it = std::find(_members.begin(), _members.end(), targetClient.getFd());
     if (it != _members.end()) {
         _members.erase(it); // Remove from channel members
@@ -110,12 +123,7 @@ void Channel::kick(Client& operatorClient, Client& targetClient, const std::stri
     }
 }
 
-void Channel::invite(Client& operatorClient, Client& targetClient) {
-    if (!isOperator(operatorClient.getFd())) {
-        std::cout << "INVITE: " << operatorClient.getNickname() << " does not have permission to invite users." << std::endl;
-        return;
-    }
-
+void Channel::invite(Client& targetClient) {
     if (_invitedClients.find(targetClient.getFd()) == _invitedClients.end()) {
         _invitedClients.insert(targetClient.getFd()); // Mark as invited
         std::cout << "INVITE: " << targetClient.getNickname() << " has been invited to the channel." << std::endl;
@@ -124,12 +132,7 @@ void Channel::invite(Client& operatorClient, Client& targetClient) {
     }
 }
 
-void Channel::setMode(Client& operatorClient, const char flag, const std::string& param) {
-    if (!isOperator(operatorClient.getFd())) {
-        std::cout << "MODE: User doesn't have permission to set the mode." << std::endl;
-        return;
-    }
-
+void Channel::mode(const char flag, const std::string& param) {
     switch (flag) {
         case 'i':  // Invite-only mode
             _inviteOnly = !_inviteOnly;  // Toggle invite-only mode
@@ -143,6 +146,7 @@ void Channel::setMode(Client& operatorClient, const char flag, const std::string
 
         case 'k':  // Set channel key
             _key = param;  // Set the key directly
+			_keyReq = true;
             std::cout << "MODE: Channel key set to: " << _key << std::endl;
             break;
 
@@ -176,11 +180,7 @@ void Channel::setMode(Client& operatorClient, const char flag, const std::string
     }
 }
 
-void Channel::setTopic(Client& operatorClient, const std::string& newTopic) {
-    if (getMode("topicRestricted") && !isOperator(operatorClient.getFd())) {
-        std::cout << "TOPIC: " << operatorClient.getNickname() << " does not have permission to change the topic.\r\n";
-        return;
-    }
+void Channel::topic(const std::string& newTopic) {
     _topic = newTopic;
     std::cout << "TOPIC: The channel topic has been changed to: " << newTopic << "\r\n";
 }
