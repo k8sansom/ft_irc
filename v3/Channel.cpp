@@ -85,15 +85,13 @@ void Channel::broadcastMessage(const std::string& message, int sender_fd) {
 }
 
 bool Channel::checkChannelKey(const std::string key) const {
-    // Check if the channel requires a key
-    if (_keyReq) {
-		if (key != _key) {
-        	std::cout << "Channel is password protected." << std::endl;
-        	return false; // Channel is password protected, no key provided
-		}
-    }
+    if (key != _key) {
+        std::cout << "Channel password is incorrect." << std::endl;
+        return false; // Channel is password protected, no key provided
+	}
 	return true;
 }
+
 bool Channel::checkInvite(int client_fd) const {
     // Check if invite-only mode is active
     if (_inviteOnly) {
@@ -149,10 +147,16 @@ void Channel::mode(const char flag, const std::string& param) {
             break;
 
         case 'k':  // Set channel key
-            _key = param;  // Set the key directly
-			_keyReq = true;
-            std::cout << "MODE: Channel key set to: " << _key << std::endl;
-            break;
+           if (!_keyReq) {
+				_key = param;  // Set the key directly
+				_keyReq = true;
+				std::cout << "MODE: Channel key set to: " << _key << std::endl;
+		   } else {
+				_key = "";
+				_keyReq = false;
+				std::cout << "MODE: Channel key requirement removed" << std::endl;
+		   }
+        	break;
 
         case 'l':  // Set user limit
             {
@@ -193,5 +197,3 @@ void Channel::topic(const std::string& newTopic) {
 std::string Channel::getTopic() const {
     return _topic.empty() ? "No topic set" : "Current topic: " + _topic;
 }
-
-

@@ -67,13 +67,18 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 				break;
 
 			case 'k':  // Channel key
-				if (parameters.empty()) {
+				if (parameters.empty() && !channel.getMode("keyReq")) {
 					sendError(client_fd, ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters to set the channel key.");
 					return;
 				}
-				channel.mode(flag, parameters);
-				mode_message = channel_name + ": Channel key set to '" + parameters + "'\r\n";
-				send(client_fd, mode_message.c_str(), mode_message.length(), 0);
+					channel.mode(flag, parameters);
+				if (channel.getMode("keyReq")) {
+					mode_message = channel_name + ": Channel key set to '" + parameters + "'\r\n";
+					send(client_fd, mode_message.c_str(), mode_message.length(), 0);
+				} else {
+					mode_message = channel_name + ": Channel key requirement removed\r\n";
+					send(client_fd, mode_message.c_str(), mode_message.length(), 0);
+				}
 				break;
 
 			case 'l':  // User limit

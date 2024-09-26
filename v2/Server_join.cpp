@@ -75,7 +75,7 @@ bool Server::isValidChannelName(const std::string& name) {
 void Server::joinExistingChannel(int client_fd, const std::string& channel_name, const std::string& key) {
     Channel& channel = channels[channel_name];
 
-    if (!channel.checkChannelKey(key)) {
+    if (channel.getMode("keyReq") && !channel.checkChannelKey(trim(key))) {
         sendError(client_fd, ERR_BADCHANNELKEY, channel_name, "Channel key is incorrect!");
         return;
     } else if (!channel.checkUserLimit()) {

@@ -14,7 +14,7 @@ testing irc:
 12. kk - INVITE #test ks
 13. ks - JOIN #test (allowed now because invited)
 14. kk - MODE #test -o ks
-!! (not working) 15. ks - MODE #test -o kk 
+15. ks - MODE #test -o kk 
 16. kk - TOPIC #test now even hotter (shouldn't be allowed because no longer operator)
 17. kk - MODE #test -l 2
 18. create another client (kt) and have them join the channel, should not be allowed because user limit reached
@@ -22,4 +22,4 @@ testing irc:
 20. kk - MODE #test -l 5
 21. kk - MODE #test -i
 22. kt - JOIN #test 1234 (should not be allowed because incorrect pass)
-!!!(not working) 23. kt - JOIN #test 5678 (should be allowed and join)
+23. kt - JOIN #test 5678 (should be allowed and join)
