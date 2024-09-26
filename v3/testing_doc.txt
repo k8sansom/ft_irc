@@ -1,0 +1,25 @@
+testing irc:
+
+1. nc 127.0.0.1 13900
+2. PASS 1234
+3. NICK kk, NICK ks, NICK kt
+4. USER ksansom ksansom 0 : k s
+5. kk - JOIN #test, ks - JOIN #test
+6. TOPIC #test hot topic
+7. kk - MODE #test +t
+8. TOPIC #test now hotter topic (if ks does it, it shouldn't be permitted)
+9. kk - KICK #test ks
+10. kk - MODE #test +i
+11. ks - JOIN #test (shouldn't be allowed because invite only)
+12. kk - INVITE #test ks
+13. ks - JOIN #test (allowed now because invited)
+14. kk - MODE #test -o ks
+!! (not working) 15. ks - MODE #test -o kk 
+16. kk - TOPIC #test now even hotter (shouldn't be allowed because no longer operator)
+17. kk - MODE #test -l 2
+18. create another client (kt) and have them join the channel, should not be allowed because user limit reached
+19. kk - MODE #test -k 5678
+20. kk - MODE #test -l 5
+21. kk - MODE #test -i
+22. kt - JOIN #test 1234 (should not be allowed because incorrect pass)
+!!!(not working) 23. kt - JOIN #test 5678 (should be allowed and join)
