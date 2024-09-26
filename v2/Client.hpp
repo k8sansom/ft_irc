@@ -40,7 +40,6 @@ private:
     std::string _realname;
     std::string _password;
     bool 		_authenticated;
-	// bool		_operator;
 };
 
 #endif

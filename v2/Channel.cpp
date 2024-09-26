@@ -1,6 +1,6 @@
 #include "Channel.hpp"
 
-Channel::Channel() : _name(""), _operator_fd(-1), _topic(""), _key("") {
+Channel::Channel() : _name(""), _topic(""), _key("") {
 	_inviteOnly = false;
 	_topicRestricted = false;
 	_keyReq = false;
@@ -8,15 +8,11 @@ Channel::Channel() : _name(""), _operator_fd(-1), _topic(""), _key("") {
 }
 
 Channel::Channel(const std::string& channelName, int operator_fd) 
-    : _name(channelName), _operator_fd(operator_fd), _topic("") {
+    : _name(channelName), _topic("") {
     _members.push_back(operator_fd);
+	_operators.insert(operator_fd);
 }
-
-Channel::Channel(const std::string& channelName, int operator_fd, const std::string& key)
-    : _name(channelName), _operator_fd(operator_fd), _key(key) {
-    _members.push_back(operator_fd);
-}
-
+	
 Channel::~Channel() {}
 
 const std::string& Channel::getName() const {
@@ -49,8 +45,8 @@ bool Channel::addClient(int client_fd) {
 
 void Channel::removeClient(int client_fd) {
     _members.erase(std::remove(_members.begin(), _members.end(), client_fd), _members.end());
-    if (client_fd == _operator_fd && !_members.empty()) {
-        _operator_fd = _members.front();  // Transfer operator rights to the first member
+    if (_operators.find(client_fd) != _operators.end()) {
+        _operators.insert(_members.front());  // Transfer operator rights to the first member
     }
 }
 
@@ -59,7 +55,8 @@ bool Channel::isEmpty() const {
 }
 
 bool Channel::isOperator(int client_fd) const {
-    return _operator_fd == client_fd;
+    // Use std::set::find to check if the client_fd exists in the _operators set
+    return _operators.find(client_fd) != _operators.end();
 }
 
 void Channel::broadcastMessage(const std::string& message, int sender_fd) {
@@ -169,11 +166,12 @@ void Channel::mode(const char flag, const std::string& param) {
             int clientFd;
             std::stringstream ss2(param);
             if (ss2 >> clientFd) {
-                if (std::find(_members.begin(), _members.end(), clientFd) != _members.end()) {
-                    _operators.insert(clientFd);  // Grant operator privilege
-                    std::cout << "MODE: Client with fd " << clientFd << " is now an operator." << std::endl;
+				if (!isOperator(clientFd)) {
+						_operators.insert(clientFd);  // Grant operator privilege
+						std::cout << "MODE: Client with fd " << clientFd << " is now an operator." << std::endl;
                 } else {
-                    std::cout << "MODE: Client fd " << clientFd << " is not a member of the channel." << std::endl;
+                    _operators.erase(clientFd);
+					std::cout << "MODE: Client with fd " << clientFd << " is no longer an operator." << std::endl;
                 }
             } else {
                 std::cout << "MODE: Invalid client fd parameter." << std::endl;

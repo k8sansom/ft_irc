@@ -46,7 +46,7 @@ void Server::handleJoinCommand(int client_fd, const std::string& message) {
         if (it != channels.end()) {
             joinExistingChannel(client_fd, channel_name, key);
         } else {
-            createAndJoinChannel(client_fd, channel_name, key);
+            createAndJoinChannel(client_fd, channel_name);
         }
 	}
 }
@@ -96,8 +96,8 @@ void Server::joinExistingChannel(int client_fd, const std::string& channel_name,
     }
 }
 
-void Server::createAndJoinChannel(int client_fd, const std::string& channel_name, const std::string& key) {
-    channels.insert(std::make_pair(channel_name, Channel(channel_name, client_fd, key)));
+void Server::createAndJoinChannel(int client_fd, const std::string& channel_name) {
+    channels.insert(std::make_pair(channel_name, Channel(channel_name, client_fd)));
     std::cout << "Channel created: " << channel_name << " with operator: " << client_fd << std::endl;
 
 	std::cout << "Available channels after creation: ";

@@ -112,9 +112,17 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 				// Check if the target_fd is in the channel
 				const std::vector<int>& members = channel.getMembers();
 				if (std::find(members.begin(), members.end(), target_fd) != members.end()) {
-					channel.mode(flag, parameters);
-					std::string mode_message = "MODE: Client " + target_nickname + " is now an operator.\r\n";
-					send(client_fd, mode_message.c_str(), mode_message.length(), 0);
+					std::stringstream ss;
+					ss << target_fd;
+					std::string target_fd_str = ss.str();
+					channel.mode(flag, target_fd_str);
+					if (channel.isOperator(target_fd)) {
+						std::string mode_message = "MODE: Client " + target_nickname + " is now an operator.\r\n";
+						send(client_fd, mode_message.c_str(), mode_message.length(), 0);
+					} else {
+						std::string mode_message = "MODE: Client " + target_nickname + " is no longer an operator.\r\n";
+						send(client_fd, mode_message.c_str(), mode_message.length(), 0);
+					}
 				} else {
 					sendError(client_fd, ERR_USERNOTINCHANNEL, "MODE", "No such client in channel.");
 				}

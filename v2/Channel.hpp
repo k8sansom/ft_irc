@@ -13,7 +13,6 @@ class Channel {
 private:
     std::string _name;
     std::vector<int> _members;
-    int _operator_fd;
     std::string _topic;
     std::string _key; 
     std::set<int> _invitedClients;
@@ -27,7 +26,6 @@ private:
 public:
     Channel();
     Channel(const std::string& channelName, int operator_fd);
-    Channel(const std::string& channelName, int operator_fd, const std::string& key); 
     ~Channel();
 
     // Getters

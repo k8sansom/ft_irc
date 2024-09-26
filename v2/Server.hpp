@@ -82,7 +82,7 @@ private:
     void leaveAllChannels(int client_fd);
     bool isValidChannelName(const std::string& name);
     void joinExistingChannel(int client_fd, const std::string& channel_name, const std::string& key);
-    void createAndJoinChannel(int client_fd, const std::string& channel_name, const std::string& key);
+    void createAndJoinChannel(int client_fd, const std::string& channel_name);
     void sendJoinConfirmation(int client_fd, const std::string& channel_name);
     void sendChannelInfo(int client_fd, const std::string& channel_name);
 
