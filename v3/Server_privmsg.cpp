@@ -52,6 +52,11 @@ std::pair<std::string, std::string> Server::extractTargetAndMsg(const std::strin
 void Server::handleChannelMsg(int client_fd, const std::string& target, const std::string& msgContent) {
     if (channels.find(target) != channels.end()) {
         const std::vector<int>& members = channels[target].getMembers();
+        if (std::find(members.begin(), members.end(), client_fd) == members.end()) {
+            std::string errorMsg = "ERROR :You are not in channel " + target + "\r\n";
+            send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
+            return;
+        }
         for (std::vector<int>::const_iterator it = members.begin(); it != members.end(); ++it) {
             if (*it != client_fd) {
                 std::string response = ":" + clients[client_fd].getNickname() + " PRIVMSG " + target + " :" + msgContent + "\r\n";

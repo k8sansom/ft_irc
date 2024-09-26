@@ -16,6 +16,10 @@
 #include <cstdlib>
 #include <csignal>
 
+#define ANSI_RESET "\033[0m"
+#define ANSI_PINK "\033[38;5;205m"
+#define ANSI_PURPLE "\033[38;5;93m"
+
 #include "ErrorCodes.hpp"
 
 #include "Client.hpp"

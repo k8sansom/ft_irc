@@ -74,7 +74,37 @@ void Server::acceptClient() {
 
     clients.insert(std::make_pair(client_fd, Client(client_fd)));
     std::cout << "New client connected: " << client_fd << std::endl;
-    std::string response = "WELCOME TO 3,5 SERVER\r\n";
+    std::string response =
+        ANSI_PINK                                                                                
+       " _|          _|  _|_|_|_|  _|          _|_|_|    _|_|    _|      _|  _|_|_|_|  \r\n"
+       " _|          _|  _|        _|        _|        _|    _|  _|_|  _|_|  _|        \r\n"
+       " _|    _|    _|  _|_|_|    _|        _|        _|    _|  _|  _|  _|  _|_|_|    \r\n"
+       "   _|  _|  _|    _|        _|        _|        _|    _|  _|      _|  _|          \r\n"
+        "     _|  _|      _|_|_|_|  _|_|_|_|    _|_|_|    _|_|    _|      _|  _|_|_|_|  \r\n"
+        " \r\n"
+       " \r\n"                      
+       " \r\n"                                                                        
+                                                                              
+        ANSI_PURPLE
+                                                    
+                              
+       " _|_|_|        _|_|_|_|  \r\n"
+       "       _|      _|          \r\n"
+       "   _|_|        _|_|_|      \r\n"
+       "       _|            _|    \r\n"
+       " _|_|_|    _|  _|_|_|    \r\n"
+       " \r\n"
+       " \r\n"                      
+       " \r\n"                                                                              
+       "   _|_|_|  _|_|_|_|  _|_|_|    _|      _|  _|_|_|_|  _|_|_|     \r\n"
+       " _|        _|        _|    _|  _|      _|  _|        _|    _|   \r\n" 
+       "   _|_|    _|_|_|    _|_|_|    _|      _|  _|_|_|    _|_|_|     \r\n"
+       "       _|  _|        _|    _|    _|  _|    _|        _|    _|   \r\n"
+       " _|_|_|    _|_|_|_|  _|    _|      _|      _|_|_|_|  _|    _|   \r\n"
+                                      
+                                      
+
+        ANSI_RESET;
     send(client_fd, response.c_str(), response.length(), 0);
 }
 
