@@ -1,14 +1,23 @@
 #include "Channel.hpp"
 
-Channel::Channel() : _name(""), _topic(""), _key("") {
-	_inviteOnly = false;
-	_topicRestricted = false;
-	_keyReq = false;
-	_userLimit = 0;
-}
+Channel::Channel() 
+    : _name(""), 
+      _topic(""), 
+      _key(""), 
+      _inviteOnly(false), 
+      _topicRestricted(false), 
+      _keyReq(false), 
+      _userLimit(0)
+{}
 
 Channel::Channel(const std::string& channelName, int operator_fd) 
-    : _name(channelName), _topic("") {
+    : _name(channelName),
+      _topic(""), 
+      _key(""), 
+      _inviteOnly(false), 
+      _topicRestricted(false), 
+      _keyReq(false), 
+      _userLimit(0) {
     _members.push_back(operator_fd);
 	_operators.insert(operator_fd);
 }
@@ -59,14 +68,15 @@ bool Channel::isOperator(int client_fd) const {
     return _operators.find(client_fd) != _operators.end();
 }
 
-void Channel::broadcastMessage(const std::string& message, int sender_fd) {
-    std::cout << "Broadcasting message: " << message << " from sender: " << sender_fd << std::endl;
-    
+void Channel::broadcastMessage(const std::string& message, int exclude_fd) {
+    std::cout << "Broadcasting message: " << message << std::endl;
+
     // Iterate over all members in the channel
     for (std::vector<int>::iterator it = _members.begin(); it != _members.end(); ++it) {
-        int member_fd = *it; 
-        // Skip sending the message to the sender
-        if (member_fd == sender_fd) {
+        int member_fd = *it;
+
+        // Skip sending to the excluded client, unless exclude_fd is -1
+        if (exclude_fd != -1 && member_fd == exclude_fd) {
             continue;
         }
 
@@ -76,13 +86,12 @@ void Channel::broadcastMessage(const std::string& message, int sender_fd) {
         // Check if the send was successful
         if (bytes_sent < 0) {
             std::cerr << "Error: Failed to send message to client " << member_fd << std::endl;
-
-            // Optional: You may want to remove the member from the channel if the send fails consistently
         } else {
             std::cout << "Message sent to client " << member_fd << ": " << bytes_sent << " bytes" << std::endl;
         }
     }
 }
+
 
 bool Channel::checkChannelKey(const std::string key) const {
     if (key != _key) {
@@ -137,7 +146,7 @@ void Channel::invite(Client& inviterClient, Client& targetClient) {
         _invitedClients.insert(targetClient.getFd()); // Mark as invited
 
         std::string invite_message = ":" + inviterClient.getNickname() + " INVITE " + targetClient.getNickname() + " :" + _name + "\r\n";
-        broadcastMessage(invite_message, inviterClient.getFd());
+        broadcastMessage(invite_message, -1);
 
         std::cout << "INVITE: " << targetClient.getNickname() << " has been invited by " << inviterClient.getNickname() << " to the channel." << std::endl;
     } else {

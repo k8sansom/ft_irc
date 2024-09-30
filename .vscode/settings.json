@@ -69,6 +69,8 @@
 		"queue": "cpp",
 		"ratio": "cpp",
 		"stack": "cpp",
-		"variant": "cpp"
+		"variant": "cpp",
+		"csignal": "cpp",
+		"set": "cpp"
 	}
 }
