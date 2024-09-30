@@ -5,13 +5,13 @@ testing irc:
 3. NICK kk, NICK ks, NICK kt
 4. USER ksansom ksansom 0 : k s
 5. kk - JOIN #test, ks - JOIN #test
-6. TOPIC #test hot topic
-7. kk - MODE #test +t
+**6. TOPIC #test hot topic - not working, everyone should be able to change this until MODE -t
+**7. kk - MODE #test +t - this is working in reverse
 8. TOPIC #test now hotter topic (if ks does it, it shouldn't be permitted)
-9. kk - KICK #test ks
-10. kk - MODE #test +i
+9. kk - KICK #test ks - not working in hexchat
+10. kk - MODE #test +i - nothing happening in hexchat
 11. ks - JOIN #test (shouldn't be allowed because invite only)
-12. kk - INVITE #test ks
+12. kk - INVITE ks #test ks
 13. ks - JOIN #test (allowed now because invited)
 14. kk - MODE #test -o ks
 !! (not working) 15. ks - MODE #test -o kk 

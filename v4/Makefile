@@ -4,10 +4,13 @@ CFLAGS = -Wall -Wextra -Werror -std=c++98
 SRCS = 	Client.cpp \
 		Server.cpp \
 		Server_connection.cpp \
+		Server_invite.cpp \
 		Server_join.cpp \
-		Server_opcmds.cpp \
+		Server_kick.cpp \
+		Server_mode.cpp \
 		Server_nick.cpp \
 		Server_privmsg.cpp \
+		Server_topic.cpp \
 		Server_user.cpp \
 		Server_utils.cpp \
 		Channel.cpp \
