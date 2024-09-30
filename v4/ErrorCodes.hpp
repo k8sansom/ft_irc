@@ -89,3 +89,10 @@
 
 // ERR_BADPARAM (484) : The parameters are not valid
 #define ERR_BADPARAM 484
+
+#define RPL_NOTOPIC 331
+#define RPL_TOPIC 332
+#define RPL_TOPICWHOTIME 333
+#define RPL_CHANNELMODEIS 324
+
+

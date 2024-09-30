@@ -10,12 +10,11 @@ void Server::handleKickCommand(int client_fd, const std::string& message) {
         return;
     }
 
-    // Extract parameters from the message
     std::vector<std::string> params = extractParams(message);
 
-    // Check for sufficient parameters
     if (params.size() < 2) {
         sendError(client_fd, ERR_NEEDMOREPARAMS, "KICK", "Not enough parameters.");
+        sendInfoMessage(client_fd, ERR_NEEDMOREPARAMS, "KICK", "Not enough parameters.");
         return;
     }
 
@@ -44,6 +43,7 @@ void Server::handleKickCommand(int client_fd, const std::string& message) {
 
 	if (!channel.isOperator(client_fd)) {
         sendError(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to kick.");
+        sendInfoMessage(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to kick.");
         return;
     }
 
@@ -58,6 +58,7 @@ void Server::handleKickCommand(int client_fd, const std::string& message) {
 
     if (target_fd == -1) {
         sendError(client_fd, ERR_NOSUCHNICK, target_nickname, "No such nickname.");
+        sendInfoMessage(client_fd, ERR_NOSUCHNICK, target_nickname, "No such nickname.");
         return;
     }
 

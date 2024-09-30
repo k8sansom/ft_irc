@@ -34,7 +34,6 @@ int main(int ac, char** av) {
         std::cout << "Usage: ./ircserv <port> <password>" << std::endl;
         return 1;
     }
-
     try {
         int port = atoi(av[1]);
         if (port <= 0) {

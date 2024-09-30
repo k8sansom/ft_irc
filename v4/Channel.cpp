@@ -71,7 +71,6 @@ bool Channel::isOperator(int client_fd) const {
 void Channel::broadcastMessage(const std::string& message, int exclude_fd) {
     std::cout << "Broadcasting message: " << message << std::endl;
 
-    // Iterate over all members in the channel
     for (std::vector<int>::iterator it = _members.begin(); it != _members.end(); ++it) {
         int member_fd = *it;
 
@@ -80,10 +79,8 @@ void Channel::broadcastMessage(const std::string& message, int exclude_fd) {
             continue;
         }
 
-        // Attempt to send the message
         ssize_t bytes_sent = send(member_fd, message.c_str(), message.length(), 0);
 
-        // Check if the send was successful
         if (bytes_sent < 0) {
             std::cerr << "Error: Failed to send message to client " << member_fd << std::endl;
         } else {
@@ -127,12 +124,12 @@ bool Channel::checkUserLimit(void) const {
 void Channel::kick(Client& kickerClient, Client& targetClient, const std::string& reason) {
     std::vector<int>::iterator it = std::find(_members.begin(), _members.end(), targetClient.getFd());
     if (it != _members.end()) {
-        _members.erase(it);
-
         std::string kick_message = ":" + kickerClient.getNickname() + "!" + targetClient.getUsername() + "@server KICK " + _name + " " + targetClient.getNickname() + " :" + reason + "\r\n";
-        broadcastMessage(kick_message, targetClient.getFd());
-
+        broadcastMessage(kick_message, -1);
+  
         std::cout << "KICK: " << targetClient.getNickname() << " has been kicked from the channel: " << reason << std::endl;
+    
+        _members.erase(it);
     } else {
         std::string feedback_message = ":" + kickerClient.getNickname() + "!" + kickerClient.getUsername() + "@server NOTICE " + kickerClient.getNickname() + " :No such client found in channel " + _name + "\r\n";
         send(kickerClient.getFd(), feedback_message.c_str(), feedback_message.length(), 0);

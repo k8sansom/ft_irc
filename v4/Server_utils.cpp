@@ -31,3 +31,13 @@ std::vector<std::string> Server::split(const std::string& str, char delimiter) {
     }
     return tokens;
 }
+
+
+void Server::sendInfoMessage(int client_fd, int info_code, const std::string& channel_name, const std::string& message) {
+    // Format the message in the same style as the `sendError` function
+    std::ostringstream oss;
+    oss << ": " << info_code << " " << clients[client_fd].getNickname() << " " << channel_name << " :" << message << "\r\n";
+    
+    // Send the formatted message to the client
+    send(client_fd, oss.str().c_str(), oss.str().length(), 0);
+}

@@ -10,6 +10,7 @@ Server::Server(int port, const std::string& password): port(port), password(pass
     setupSocket();
     bindSocket();
     listenSocket();
+    serverName = "3,5 server"; 
 }
 
 Server::~Server() {}

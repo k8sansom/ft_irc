@@ -38,8 +38,8 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 
 	if (params.size() == 1) {
         std::string current_modes = channel.getCurrentModeFlags();
-        std::string mode_message = "324 " + clients[client_fd].getNickname() + " " + channel_name + " +"+ current_modes + "\r\n";
-        send(client_fd, mode_message.c_str(), mode_message.length(), 0);
+        std::string mode_message = current_modes + "\r\n";
+		sendInfoMessage(client_fd, RPL_CHANNELMODEIS, channel_name, mode_message);
         return;
     }
 
@@ -48,12 +48,14 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 
 	if (flags.empty() || (flags[0] != '+' && flags[0] != '-')) {
 		sendError(client_fd, ERR_BADPARAM, "MODE", "Invalid mode flag. Usage: MODE <channel> <+flag or -flag> [parameters]");
+		sendInfoMessage(client_fd, ERR_BADPARAM, "MODE", "Invalid mode flag. Usage: MODE <channel> <+flag or -flag> [parameters]");
 		return;
 	}
 	flags = flags.substr(1);  // Trim the first character
 
 	if (!channel.isOperator(client_fd)) {
         sendError(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to change modes.");
+		sendInfoMessage(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to change modes.");
         return;
     }
 
@@ -82,6 +84,7 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 			case 'k':  // Channel key
 				if (parameters.empty() && !channel.getMode("keyReq")) {
 					sendError(client_fd, ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters to set the channel key.");
+					sendInfoMessage(client_fd, ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters to set the channel key.");
 					return;
 				}
 				wasEnabled = channel.getMode("keyReq");
@@ -98,6 +101,7 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 			case 'l':  // User limit
 				if (!isNonNegativeInteger(parameters)) {
 					sendError(client_fd, ERR_BADPARAM, "MODE", "User limit must be a valid non-negative integer.");
+					sendInfoMessage(client_fd, ERR_BADPARAM, "MODE", "User limit must be a valid non-negative integer.");
 					return;
 				}
 				channel.mode(flag, parameters);
@@ -109,50 +113,47 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 			case 'o': {  // Operator privilege
 				if (params.size() < 3) {
 					sendError(client_fd, ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters to set operator privilege");
+					sendInfoMessage(client_fd, ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters to set operator privilege");
 					return;
 				}
 
-				std::string target_nickname = trim(parameters); // Assuming parameters contains the nickname
-
-				// Find the client fd associated with the nickname
+				std::string target_nickname = trim(parameters);
 				int target_fd = -1;
 				for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
 					int op_fd = it->first;
-					// Check if the client's nickname matches the target nickname
 					if (clients[op_fd].getNickname() == target_nickname) {
 						target_fd = op_fd;
-						break; // Stop searching once the target is found
+						break;
 					}
 				}
 
-				// If no client with the target nickname was found, send an error
 				if (target_fd == -1) {
 					sendError(client_fd, ERR_NOSUCHNICK, target_nickname, "No such nickname.");
+					sendInfoMessage(client_fd, ERR_NOSUCHNICK, target_nickname, "No such nickname.");
 					return;
 				}
 
-				// Check if the target_fd is in the channel
 				const std::vector<int>& members = channel.getMembers();
 				if (std::find(members.begin(), members.end(), target_fd) != members.end()) {
-					// Grant or revoke operator privilege
+
 					bool isNowOperator = !channel.isOperator(target_fd);
 					channel.mode(flag, isNowOperator ? "add" : "remove");
 
-					// Broadcast MODE message to the channel
 					std::string mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + 
 											"@server MODE " + channel_name + " " + (isNowOperator ? "+o " : "-o ") + target_nickname + "\r\n";
 					channel.broadcastMessage(mode_message, client_fd);
 
-					// Send confirmation to the operator who issued the command
 					send(client_fd, mode_message.c_str(), mode_message.length(), 0);
 				} else {
 					sendError(client_fd, ERR_USERNOTINCHANNEL, "MODE", "No such client in channel.");
-				}
+					sendInfoMessage(client_fd, ERR_USERNOTINCHANNEL, "MODE", "No such client in channel.");
 				break;
+				}
 }
 
 			default:
 				sendError(client_fd, ERR_BADPARAM, "MODE", "Unknown mode flag.");
+				sendInfoMessage(client_fd, ERR_BADPARAM, "MODE", "Unknown mode flag.");
 				return;
 		}
 	}

@@ -15,6 +15,8 @@
 #include <sstream>
 #include <cstdlib>
 #include <csignal>
+#include <ctime>
+#include <algorithm>
 
 #define ANSI_RESET "\033[0m"
 #define ANSI_PINK "\033[38;5;205m"
@@ -29,6 +31,7 @@ bool isValidPassword(const std::string& password);
 
 class Server {
 public:
+    std::string serverName; 
     Server(int port, const std::string& password);
     ~Server();
 
@@ -65,6 +68,7 @@ private:
     // Server_utils
     bool isCommandFormatValid(const std::string& message, const std::string& command);
     void sendError(int client_fd, int error_code, const std::string& target, const std::string& message);
+    void sendInfoMessage(int client_fd, int info_code, const std::string& channel_name, const std::string& message);
     std::vector<std::string> split(const std::string& str, char delimiter);
 	std::string trim(const std::string& str);
 

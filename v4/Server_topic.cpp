@@ -9,10 +9,8 @@ void Server::handleTopicCommand(int client_fd, const std::string& message) {
         return;
     }
 
-    // Extract parameters from the message
     std::vector<std::string> params = extractParams(message);
 
-    // Check for sufficient parameters
     if (params.size() < 1) {
         sendError(client_fd, ERR_NEEDMOREPARAMS, "TOPIC", "Not enough parameters.");
         return;
@@ -26,39 +24,58 @@ void Server::handleTopicCommand(int client_fd, const std::string& message) {
         return;
     }
 
-    Channel& channel = channel_it->second; // Get the channel object
+    Channel& channel = channel_it->second;
 
-	if (params.size() < 2) {
+    if (params.size() == 1) {
         std::string current_topic = channel.getTopic();
         if (current_topic.empty()) {
-            send(client_fd, "No topic is set for this channel.\r\n", 34, 0);
+            sendInfoMessage(client_fd, RPL_NOTOPIC, channel_name, "No topic is set");
         } else {
-            std::string topic_message = "Current topic for " + channel_name + ": " + current_topic + "\r\n";
-            send(client_fd, topic_message.c_str(), topic_message.length(), 0);
+            sendInfoMessage(client_fd, RPL_TOPIC, channel_name, current_topic);
         }
         return;
     }
 
-	std::string new_topic;
-    for (size_t i = 1; i < params.size(); ++i) {
+    std::string new_topic = trim(params[1]);
+    // Remove colon at the start if present
+    if (new_topic[0] == ':') {
+        new_topic = new_topic.substr(1);
+    }
+
+    if (new_topic.empty()) {
+        channel.topic("");
+
+        std::string broadcast_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server TOPIC " + channel_name + " :\r\n";
+        channel.broadcastMessage(broadcast_message, -1);
+
+        std::string confirmation_message = "You have cleared the topic for " + channel_name + "\r\n";
+        send(client_fd, confirmation_message.c_str(), confirmation_message.length(), 0);
+
+        return;
+    }
+
+    for (size_t i = 2; i < params.size(); ++i) {
         if (i > 1) {
-            new_topic += " ";  // Add a space between parameters
+            new_topic += " ";
         }
         new_topic += params[i];
     }
+
     new_topic = trim(new_topic);
 
 	if (channel.getMode("topicRestricted")) {
-			if (!channel.isOperator(client_fd)) {
-        		sendError(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to change topic.");
-        		return;
-    		}
+        if (!channel.isOperator(client_fd)) {
+            sendError(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to change topic.");
+            sendInfoMessage(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to change the topic.");
+            return;
+        }
 	}
 
-	// Perform the invite (this could be a function in your Channel class)
     channel.topic(new_topic);
 
-    // Optionally, send a confirmation to the client who changed the topic
-    std::string confirmation_message = channel_name + ": You changed the topic to \"" + new_topic + "\"\r\n";
+    std::string broadcast_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server TOPIC " + channel_name + " :" + new_topic + "\r\n";
+    channel.broadcastMessage(broadcast_message, -1);
+
+    std::string confirmation_message = "You changed the topic to: \"" + new_topic + "\"\r\n";
     send(client_fd, confirmation_message.c_str(), confirmation_message.length(), 0);
 }
