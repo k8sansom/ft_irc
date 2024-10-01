@@ -155,43 +155,53 @@ void Channel::invite(Client& inviterClient, Client& targetClient) {
 }
 
 
-void Channel::mode(const char flag, const std::string& param) {
+void Channel::mode(const char flag, const char sign, const std::string& param) {
     switch (flag) {
-        case 'i':  // Invite-only mode
-            _inviteOnly = !_inviteOnly;  // Toggle invite-only mode
-            std::cout << "MODE: Invite-only mode " << (_inviteOnly ? "enabled" : "disabled") << std::endl;
-            break;
+		case 'i':  // Invite-only mode
+            if (sign == '+') {
+				_inviteOnly = true;
+				std::cout << "MODE: Invite-only mode enabled" << std::endl;
+			} else {
+				_inviteOnly = false;
+				std::cout << "MODE: Invite-only mode disabled" << std::endl;
+			}
 
-        case 't':  // Topic restriction mode
-            _topicRestricted = !_topicRestricted;  // Toggle topic restriction mode
-            std::cout << "MODE: Topic-restricted mode " << (_topicRestricted ? "enabled" : "disabled") << std::endl;
-            break;
+    	case 't':  // Topic restriction mode
+            if (sign == '+') {
+				_topicRestricted = true;
+				std::cout << "MODE: Topic restricted mode enabled" << std::endl;
+			} else {
+				_topicRestricted = false;
+				std::cout << "MODE: Topic restricted mode disabled" << std::endl;
+			}
 
         case 'k':  // Set channel key
-           if (!_keyReq) {
+			if (sign == '+') {
 				_key = param;  // Set the key directly
 				_keyReq = true;
 				std::cout << "MODE: Channel key set to: " << _key << std::endl;
-		   } else {
+			} else {
 				_key = "";
 				_keyReq = false;
 				std::cout << "MODE: Channel key requirement removed" << std::endl;
-		   }
+			}
         	break;
 
         case 'l':  // Set user limit
-            {
-                std::stringstream ss1(param);  // Initialize within the scope
-                ss1 >> _userLimit;  // Set the user limit
-                std::cout << "MODE: User limit set to: " << _userLimit << std::endl;
-            }
-            break;
+			if (sign == '+') {
+				std::stringstream ss1(param);
+				ss1 >> _userLimit;  // Set the user limit
+				std::cout << "MODE: User limit set to: " << _userLimit << std::endl;
+			} else {
+				_userLimit = 0;
+			}
+			break;
 
         case 'o': {  // Grant operator privileges
             int clientFd;
-            std::stringstream ss2(param);
+			std::stringstream ss2(param);
             if (ss2 >> clientFd) {
-				if (!isOperator(clientFd)) {
+				if (sign == '+') {
 						_operators.insert(clientFd);  // Grant operator privilege
 						std::cout << "MODE: Client with fd " << clientFd << " is now an operator." << std::endl;
                 } else {

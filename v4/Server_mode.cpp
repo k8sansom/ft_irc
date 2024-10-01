@@ -51,7 +51,7 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 		sendInfoMessage(client_fd, ERR_BADPARAM, "MODE", "Invalid mode flag. Usage: MODE <channel> <+flag or -flag> [parameters]");
 		return;
 	}
-	flags = flags.substr(1);  // Trim the first character
+	char sign = flags[0];
 
 	if (!channel.isOperator(client_fd)) {
         sendError(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to change modes.");
@@ -59,61 +59,68 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
         return;
     }
 
-	for (size_t i = 0; i < flags.length(); ++i) {
+	for (size_t i = 1; i < flags.length(); ++i) {
 		char flag = flags[i];
 		std::string mode_message;
-	
-		bool wasEnabled = false;
 		switch (flag) {
 			case 'i':  // Invite-only mode
-				wasEnabled = channel.getMode("inviteOnly");
-				channel.mode(flag, "");
-				mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " " + (wasEnabled ? "-i" : "+i") + "\r\n";
-                channel.broadcastMessage(mode_message, client_fd);
+				channel.mode(flag, sign, "");
+				if (sign == '+') {
+					mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " +i " + parameters + "\r\n";
+				} else {
+					mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " -i\r\n";
+				}
+				channel.broadcastMessage(mode_message, client_fd);
 				send(client_fd, mode_message.c_str(), mode_message.length(), 0);
 				break;
 
 			case 't':  // Topic restriction mode
-				wasEnabled = channel.getMode("topicRestricted");
-				channel.mode(flag, "");
-				mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " " + (wasEnabled ? "-t" : "+t") + "\r\n";
-            	channel.broadcastMessage(mode_message, client_fd);
+				channel.mode(flag, sign, "");
+				if (sign == '+') {
+					mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " +t " + parameters + "\r\n";
+				} else {
+					mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " -t\r\n";
+				}
+				channel.broadcastMessage(mode_message, client_fd);
 				send(client_fd, mode_message.c_str(), mode_message.length(), 0);
 				break;
 
 			case 'k':  // Channel key
-				if (parameters.empty() && !channel.getMode("keyReq")) {
+				if (parameters.empty() && sign == '+') {
 					sendError(client_fd, ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters to set the channel key.");
 					sendInfoMessage(client_fd, ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters to set the channel key.");
 					return;
 				}
-				wasEnabled = channel.getMode("keyReq");
-				channel.mode(flag, parameters);
-				if (channel.getMode("keyReq")) {
-				mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " +k " + parameters + "\r\n";
+				channel.mode(flag, sign, parameters);
+				if (sign == '+') {
+					mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " +k " + parameters + "\r\n";
 				} else {
-				mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " -k\r\n";
+					mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " -k\r\n";
 				}
 				channel.broadcastMessage(mode_message, client_fd);
 				send(client_fd, mode_message.c_str(), mode_message.length(), 0);
 				break;
 
 			case 'l':  // User limit
-				if (!isNonNegativeInteger(parameters)) {
+				if (sign == '+' && !isNonNegativeInteger(parameters)) {
 					sendError(client_fd, ERR_BADPARAM, "MODE", "User limit must be a valid non-negative integer.");
 					sendInfoMessage(client_fd, ERR_BADPARAM, "MODE", "User limit must be a valid non-negative integer.");
 					return;
 				}
-				channel.mode(flag, parameters);
-				mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " +l " + parameters + "\r\n";
+				channel.mode(flag, sign, parameters);
+				if (sign == '+') {
+					mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " +l " + parameters + "\r\n";
+				} else {
+					mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " -l\r\n";
+				}
     			channel.broadcastMessage(mode_message, client_fd);
 				send(client_fd, mode_message.c_str(), mode_message.length(), 0);
 				break;
 
 			case 'o': {  // Operator privilege
 				if (params.size() < 3) {
-					sendError(client_fd, ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters to set operator privilege");
-					sendInfoMessage(client_fd, ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters to set operator privilege");
+					sendError(client_fd, ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters to give or take operator privilege");
+					sendInfoMessage(client_fd, ERR_NEEDMOREPARAMS, "MODE", "Not enough parameters to give or take operator privilege");
 					return;
 				}
 
@@ -126,31 +133,30 @@ void Server::handleModeCommand(int client_fd, const std::string& message) {
 						break;
 					}
 				}
-
 				if (target_fd == -1) {
 					sendError(client_fd, ERR_NOSUCHNICK, target_nickname, "No such nickname.");
 					sendInfoMessage(client_fd, ERR_NOSUCHNICK, target_nickname, "No such nickname.");
 					return;
 				}
-
 				const std::vector<int>& members = channel.getMembers();
 				if (std::find(members.begin(), members.end(), target_fd) != members.end()) {
-
-					bool isNowOperator = !channel.isOperator(target_fd);
-					channel.mode(flag, isNowOperator ? "add" : "remove");
-
-					std::string mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + 
-											"@server MODE " + channel_name + " " + (isNowOperator ? "+o " : "-o ") + target_nickname + "\r\n";
-					channel.broadcastMessage(mode_message, client_fd);
-
-					send(client_fd, mode_message.c_str(), mode_message.length(), 0);
+					std::stringstream ss;
+    				ss << target_fd;
+    				std::string target_str = ss.str();
+					channel.mode(flag, sign, target_str);
 				} else {
 					sendError(client_fd, ERR_USERNOTINCHANNEL, "MODE", "No such client in channel.");
 					sendInfoMessage(client_fd, ERR_USERNOTINCHANNEL, "MODE", "No such client in channel.");
-				break;
 				}
-}
-
+				if (sign == '+') {
+					mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " +o " + target_nickname + "\r\n";
+				} else {
+					mode_message = ":" + clients[client_fd].getNickname() + "!" + clients[client_fd].getUsername() + "@server MODE " + channel_name + " -o " + target_nickname + "\r\n";
+				}
+				channel.broadcastMessage(mode_message, client_fd);
+				send(client_fd, mode_message.c_str(), mode_message.length(), 0);
+				break;
+			}
 			default:
 				sendError(client_fd, ERR_BADPARAM, "MODE", "Unknown mode flag.");
 				sendInfoMessage(client_fd, ERR_BADPARAM, "MODE", "Unknown mode flag.");

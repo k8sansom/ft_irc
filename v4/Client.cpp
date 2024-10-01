@@ -89,7 +89,6 @@ bool Client::isUniqueNickname(const std::string& nickname, const std::map<int, C
 	for (it = clients.begin(); it != clients.end(); ++it) {
         if (it->second.getNickname() == nickname) {
             err_msg = "Nickname '" + nickname + "' is already in use.\r\n";
-            return false;
         }
     }
     return true;

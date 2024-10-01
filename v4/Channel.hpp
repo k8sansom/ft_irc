@@ -49,7 +49,7 @@ public:
     void kick(Client& kickerClient, Client& targetClient, const std::string& reason);
     void invite(Client& inviterClient, Client& targetClient);
 	void topic(const std::string& newTopic);
-	void mode(const char flag, const std::string& param);
+	void mode(const char flag, const char sign, const std::string& param);
 };
 
 #endif
