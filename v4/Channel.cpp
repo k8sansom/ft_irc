@@ -165,6 +165,7 @@ void Channel::mode(const char flag, const char sign, const std::string& param) {
 				_inviteOnly = false;
 				std::cout << "MODE: Invite-only mode disabled" << std::endl;
 			}
+			break;
 
     	case 't':  // Topic restriction mode
             if (sign == '+') {
@@ -174,6 +175,7 @@ void Channel::mode(const char flag, const char sign, const std::string& param) {
 				_topicRestricted = false;
 				std::cout << "MODE: Topic restricted mode disabled" << std::endl;
 			}
+			break;
 
         case 'k':  // Set channel key
 			if (sign == '+') {
