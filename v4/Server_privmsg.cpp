@@ -1,11 +1,5 @@
 #include "Server.hpp"
 
-void handlePrivMsgCommand(int client_fd, const std::string& message);
-std::pair<std::string, std::string> extractTargetAndMsg(const std::string& message, int client_fd);
-void handleChannelMsg(int client_fd, const std::string& target, const std::string& msgContent);
-void handleUserMsg(int client_fd, const std::string& target, const std::string& msgContent);
-
-
 void Server::handlePrivMsgCommand(int client_fd, const std::string& message) {
     std::string error_msg;
 

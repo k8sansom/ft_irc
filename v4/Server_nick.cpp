@@ -1,13 +1,5 @@
 #include "Server.hpp"
 
-bool validateFormat(int client_fd, const std::string& message);
-bool checkAlreadySet(int client_fd, const std::string& nick);
-bool checkUnique(int client_fd, std::string& nick, std::string& err_msg);
-void setNickname(int client_fd, const std::string& nick);
-void handleNickCommand(int client_fd, const std::string& message);
-bool sanitizeNickname(int client_fd, std::string& nick, std::string& err_msg);
-
-
 bool Server::validateFormat(int client_fd, const std::string& message) {
     if (!isCommandFormatValid(message, "NICK")) {
         sendError(client_fd, ERR_NEEDMOREPARAMS, "NICK", "Usage: NICK <nickname>");
@@ -75,8 +67,8 @@ void Server::handleNickCommand(int client_fd, const std::string& message) {
 
     if (checkAlreadySet(client_fd, nick))
         return;
-    if (sanitizeNickname(client_fd, nick, err_msg))
-        return;
+    // if (sanitizeNickname(client_fd, nick, err_msg))
+    //     return;
     if (checkUnique(client_fd, nick, err_msg))
         return;
     setNickname(client_fd, nick);
