@@ -8,14 +8,6 @@ bool Server::validateFormat(int client_fd, const std::string& message) {
     return true;
 }
 
-bool Server::checkAlreadySet(int client_fd, const std::string& nick) {
-    if (clients[client_fd].getNickname() == nick) {
-        sendError(client_fd, ERR_NICKNAMEINUSE, nick, "This nickname is already set.");
-        return true;
-    }
-    return false;
-}
-
 bool Server::sanitizeNickname(int client_fd, std::string& nick, std::string& err_msg) {
     if (!clients[client_fd].isValidNickname(nick)) {
         std::string new_nick = clients[client_fd].sanitizeNickname(nick, err_msg);
@@ -65,10 +57,8 @@ void Server::handleNickCommand(int client_fd, const std::string& message) {
 
     std::string err_msg;
 
-    if (checkAlreadySet(client_fd, nick))
+    if (sanitizeNickname(client_fd, nick, err_msg))
         return;
-    // if (sanitizeNickname(client_fd, nick, err_msg))
-    //     return;
     if (checkUnique(client_fd, nick, err_msg))
         return;
     setNickname(client_fd, nick);

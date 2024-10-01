@@ -74,7 +74,6 @@ private:
 
     //Server_nick
     bool validateFormat(int client_fd, const std::string& message);
-    bool checkAlreadySet(int client_fd, const std::string& nick);
     bool sanitizeNickname(int client_fd, std::string& nick, std::string& err_msg);
     bool checkUnique(int client_fd, std::string& nick, std::string& err_msg);
     void setNickname(int client_fd, const std::string& nick);
