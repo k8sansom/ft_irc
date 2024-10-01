@@ -54,8 +54,11 @@ bool Channel::addClient(int client_fd) {
 
 void Channel::removeClient(int client_fd) {
     _members.erase(std::remove(_members.begin(), _members.end(), client_fd), _members.end());
-    if (_operators.find(client_fd) != _operators.end()) {
-        _operators.insert(_members.front());  // Transfer operator rights to the first member
+    if (isOperator(client_fd)) {
+        _operators.erase(client_fd);
+        if (_operators.empty() && !_members.empty()) {
+            _operators.insert(_members.front());
+        }
     }
 }
 
@@ -128,8 +131,7 @@ void Channel::kick(Client& kickerClient, Client& targetClient, const std::string
         broadcastMessage(kick_message, -1);
   
         std::cout << "KICK: " << targetClient.getNickname() << " has been kicked from the channel: " << reason << std::endl;
-    
-        _members.erase(it);
+        removeClient(targetClient.getFd());
     } else {
         std::string feedback_message = ":" + kickerClient.getNickname() + "!" + kickerClient.getUsername() + "@server NOTICE " + kickerClient.getNickname() + " :No such client found in channel " + _name + "\r\n";
         send(kickerClient.getFd(), feedback_message.c_str(), feedback_message.length(), 0);
