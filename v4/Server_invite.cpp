@@ -33,7 +33,7 @@ void Server::handleInviteCommand(int client_fd, const std::string& message) {
 
     // Check if the client has permission to invite (is an operator)
     if (!channel.isOperator(client_fd)) {
-        sendError(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to invite.");
+        // sendError(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to invite.");
         sendInfoMessage(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to invite.");
         return;
     }
@@ -49,8 +49,8 @@ void Server::handleInviteCommand(int client_fd, const std::string& message) {
 
     // If no client with the target nickname was found, send an error to the inviter
     if (target_fd == -1) {
-        sendError(client_fd, ERR_NOSUCHNICK, target_nickname, "No such nickname.");
-        sendInfoMessage(client_fd, ERR_NOSUCHNICK, target_nickname, "No such nickname.");
+        // sendError(client_fd, ERR_NOSUCHNICK, target_nickname, "No such nickname.");
+        sendInfoMessage(client_fd, ERR_NOSUCHNICK, channel_name, "No such nickname.");
         return;
     }
 

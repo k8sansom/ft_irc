@@ -11,20 +11,20 @@ void Server::handleKickCommand(int client_fd, const std::string& message) {
     }
 
     std::vector<std::string> params = extractParams(message);
+    std::string channel_name = trim(params[0]);
 
     if (params.size() < 2) {
-        sendError(client_fd, ERR_NEEDMOREPARAMS, "KICK", "Not enough parameters.");
-        sendInfoMessage(client_fd, ERR_NEEDMOREPARAMS, "KICK", "Not enough parameters.");
+        // sendError(client_fd, ERR_NEEDMOREPARAMS, "KICK", "Not enough parameters.");
+        sendInfoMessage(client_fd, ERR_NEEDMOREPARAMS, channel_name, "Not enough parameters.");
         return;
     }
 
-    std::string channel_name = trim(params[0]);
     std::string target_nickname = trim(params[1]);
 	std::string reason;
 	if (params.size() > 2) {
     	for (size_t i = 1; i < params.size(); ++i) {
         	if (i > 1) {
-            	reason += " ";  // Add a space between parameters
+            	reason += " ";
         	}
         	reason += params[i];
     	}
@@ -42,7 +42,7 @@ void Server::handleKickCommand(int client_fd, const std::string& message) {
     Channel& channel = channel_it->second; // Get the channel object
 
 	if (!channel.isOperator(client_fd)) {
-        sendError(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to kick.");
+        // sendError(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to kick.");
         sendInfoMessage(client_fd, ERR_CHANOPRIVSNEEDED, channel_name, "You do not have permission to kick.");
         return;
     }
@@ -57,8 +57,8 @@ void Server::handleKickCommand(int client_fd, const std::string& message) {
     }
 
     if (target_fd == -1) {
-        sendError(client_fd, ERR_NOSUCHNICK, target_nickname, "No such nickname.");
-        sendInfoMessage(client_fd, ERR_NOSUCHNICK, target_nickname, "No such nickname.");
+        // sendError(client_fd, ERR_NOSUCHNICK, target_nickname, "No such nickname.");
+        sendInfoMessage(client_fd, ERR_NOSUCHNICK, channel_name, "No such nickname.");
         return;
     }
 
