@@ -41,8 +41,12 @@ void Server::setupSocket() {
     }
 
     int opt = 1;
-    setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-    fcntl(server_socket, F_SETFL, O_NONBLOCK);
+    if (setsockopt(server_socket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1) {
+		throw std::runtime_error("ERROR: Failed to set option REUSEADDR on socket");
+	}
+    if (fcntl(server_socket, F_SETFL, O_NONBLOCK) == -1) {
+		throw std::runtime_error("ERROR: Failed to set option NONBLOCK on socket");
+	}
 }
 
 void Server::bindSocket() {
