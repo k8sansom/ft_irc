@@ -1,5 +1,5 @@
-#include "Server.hpp"
-#include "Channel.hpp"
+#include "../inc/Server.hpp"
+#include "../inc/Channel.hpp"
 
 void handleJoinCommand(int client_fd, const std::string& message);
 std::vector<std::string> extractParams(const std::string& message);
@@ -108,6 +108,10 @@ void Server::createAndJoinChannel(int client_fd, const std::string& channel_name
 	
     sendJoinConfirmation(client_fd, channel_name);
     sendChannelInfo(client_fd, channel_name);
+    
+    #ifdef BONUS
+    bot->joinChannel(channel_name);
+    #endif
 }
 
 void Server::sendJoinConfirmation(int client_fd, const std::string& channel_name) {

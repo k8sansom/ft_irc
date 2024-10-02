@@ -1,4 +1,4 @@
-#include "Client.hpp"
+#include "../inc/Client.hpp"
 
 Client::Client() : _authenticated(false) {}
 Client::Client(int fd, std::string nickname) : _fd(fd), _nickname(nickname), _authenticated(false) {}

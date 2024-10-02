@@ -1,12 +1,7 @@
 #ifndef CHANNEL_HPP
 #define CHANNEL_HPP
 
-#include <vector>
-#include <string>
-#include <set>
-#include <algorithm>
-#include <sys/types.h>
-#include <sys/socket.h>
+#include "lib_inc.hpp"
 #include "Client.hpp"
 
 class Channel {

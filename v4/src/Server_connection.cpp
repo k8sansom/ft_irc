@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "../inc/Server.hpp"
 
 void setupSocket();
 void bindSocket();

@@ -1,39 +1,26 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <iostream>
-#include <vector>
-#include <map>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <poll.h>
-#include <utility>
-#include <sstream>
-#include <cstdlib>
-#include <csignal>
-#include <ctime>
-#include <algorithm>
-
-#define ANSI_RESET "\033[0m"
-#define ANSI_PINK "\033[38;5;205m"
-#define ANSI_PURPLE "\033[38;5;93m"
-
 #include "ErrorCodes.hpp"
+#include "lib_inc.hpp"
 
 #include "Client.hpp"
 #include "Channel.hpp"
+#include "Bot.hpp"
 
 bool isValidPassword(const std::string& password);
+
+class Bot;
 
 class Server {
 public:
     std::string serverName; 
     Server(int port, const std::string& password);
     ~Server();
+
+    #ifdef BONUS
+    Bot* bot;
+    #endif
 
     static std::vector<pollfd> fds;
     std::map<int, Client>& getClients();
@@ -44,6 +31,8 @@ public:
     static void signalHandler(int signum);
     void setupSignalHandler();
     static void cleanup();
+
+    void sendBotMessage(int client_fd, int bot_fd, const std::string& channel_name, const std::string& message);
 
 private:
     static int server_socket;
@@ -68,9 +57,9 @@ private:
     // Server_utils
     bool isCommandFormatValid(const std::string& message, const std::string& command);
     void sendError(int client_fd, int error_code, const std::string& target, const std::string& message);
-    void sendInfoMessage(int client_fd, int info_code, const std::string& channel_name, const std::string& message);
     std::vector<std::string> split(const std::string& str, char delimiter);
 	std::string trim(const std::string& str);
+    void sendInfoMessage(int client_fd, int info_code, const std::string& channel_name, const std::string& message);
 
     //Server_nick
     bool validateFormat(int client_fd, const std::string& message);
@@ -107,6 +96,12 @@ private:
 	void handleInviteCommand(int client_fd, const std::string& message);
 	void handleTopicCommand(int client_fd, const std::string& message);
 	void handleModeCommand(int client_fd, const std::string& message);
+
+    #ifdef BONUS
+    void handleDccSendRequest(int client_fd, const std::string& message);
+    #endif
 };
 
 #endif
+
+

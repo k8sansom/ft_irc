@@ -1,4 +1,5 @@
-#include "Server.hpp"
+#include "../inc/Server.hpp"
+#include "../inc/Client.hpp"
 
 void Server::handlePrivMsgCommand(int client_fd, const std::string& message) {
     std::string error_msg;
@@ -12,6 +13,17 @@ void Server::handlePrivMsgCommand(int client_fd, const std::string& message) {
     if (targetAndMessage.first.empty() || targetAndMessage.second.empty()) {
         return ;
     }
+
+    #ifdef BONUS
+    if (targetAndMessage.second.find("DCC SEND") != std::string::npos) {
+        handleDccSendRequest(client_fd, targetAndMessage.second);
+    } 
+
+    else if (targetAndMessage.second[0] == '!') {
+        bot->handleMessage(targetAndMessage.second, client_fd, targetAndMessage.first, this);
+        return;
+    } else
+    #endif
 
     if (targetAndMessage.first[0] == '#') {
         handleChannelMsg(client_fd, targetAndMessage.first, targetAndMessage.second);
@@ -51,6 +63,12 @@ void Server::handleChannelMsg(int client_fd, const std::string& target, const st
             send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
             return;
         }
+
+        #ifdef BONUS
+        if (bot->detectShit(msgContent, client_fd, target, this)) {
+            return;
+        }
+        #endif
         for (std::vector<int>::const_iterator it = members.begin(); it != members.end(); ++it) {
             if (*it != client_fd) {
                 std::string response = ":" + clients[client_fd].getNickname() + " PRIVMSG " + target + " :" + msgContent + "\r\n";

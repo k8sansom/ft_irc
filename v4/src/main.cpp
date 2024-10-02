@@ -1,10 +1,6 @@
-#include "Client.hpp"
-#include "Server.hpp"
-#include <iostream>
-#include <string>
-#include <stdexcept>
-#include <cstdlib>
-#include <csignal>
+#include "../inc/Client.hpp"
+#include "../inc/Server.hpp"
+#include "../inc/lib_inc.hpp"
 
 void signalHandler(int signum) {
     std::cout << "Interrupt signal (" << signum << ") received.\n";

@@ -1,6 +1,6 @@
-#include "Server.hpp"
-#include "Channel.hpp"
-#include "Client.hpp"
+#include "../inc/Server.hpp"
+#include "../inc/Channel.hpp"
+#include "../inc/Client.hpp"
 
 bool isNonNegativeInteger(const std::string& str) {
     if (str.empty()) return false; // Check for empty string

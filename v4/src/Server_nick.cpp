@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "../inc/Server.hpp"
 
 bool Server::validateFormat(int client_fd, const std::string& message) {
     if (!isCommandFormatValid(message, "NICK")) {

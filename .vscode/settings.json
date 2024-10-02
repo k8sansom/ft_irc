@@ -71,6 +71,8 @@
 		"stack": "cpp",
 		"variant": "cpp",
 		"csignal": "cpp",
-		"set": "cpp"
+		"set": "cpp",
+		"fstream": "cpp",
+		"cinttypes": "cpp"
 	}
 }

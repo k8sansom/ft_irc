@@ -1,6 +1,6 @@
-#include "Server.hpp"
-#include "Channel.hpp"
-#include "Client.hpp"
+#include "../inc/Server.hpp"
+#include "../inc/Channel.hpp"
+#include "../inc/Client.hpp"
 
 void Server::handleTopicCommand(int client_fd, const std::string& message) {
     std::string error_msg;

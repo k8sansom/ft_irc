@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "../inc/Server.hpp"
 
 std::string Server::trim(const std::string& str) {
     size_t first = str.find_first_not_of(" \n\r\t");
@@ -34,10 +34,14 @@ std::vector<std::string> Server::split(const std::string& str, char delimiter) {
 
 
 void Server::sendInfoMessage(int client_fd, int info_code, const std::string& channel_name, const std::string& message) {
-    // Format the message in the same style as the `sendError` function
     std::ostringstream oss;
     oss << ": " << info_code << " " << clients[client_fd].getNickname() << " " << channel_name << " :" << message << "\r\n";
-    
-    // Send the formatted message to the client
+    send(client_fd, oss.str().c_str(), oss.str().length(), 0);
+}
+
+void Server::sendBotMessage(int client_fd, int bot_fd, const std::string& channel_name, const std::string& message) {
+    std::ostringstream oss;
+    std::string bot_nickname = clients[bot_fd].getNickname(); 
+    oss << ":" << bot_nickname << " PRIVMSG " << channel_name << " :" << message << "\r\n";
     send(client_fd, oss.str().c_str(), oss.str().length(), 0);
 }

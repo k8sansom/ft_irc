@@ -1,16 +1,31 @@
-#include "Server.hpp"
+#include "../inc/Server.hpp"
 
-// Define the static clients map
 std::map<int, Client> Server::clients;
 
-// Define the static server_socket
 int Server::server_socket = -1;
 
 Server::Server(int port, const std::string& password): port(port), password(password) {
     setupSocket();
     bindSocket();
     listenSocket();
-    serverName = "3,5 server"; 
+    serverName = "3,5 server";
+
+
+    #ifdef BONUS
+    std::cout << "Initializing bot..." << std::endl;
+    bot = new Bot("server_bot");
+
+    int bot_fd = -1; // Negative FD to indicate a pseudo-client
+    bot->setBotFd(bot_fd);
+    clients[bot_fd] = Client();
+    clients[bot_fd].setNickname("server_bot");
+    clients[bot_fd].setUsername("bot_username");
+    clients[bot_fd].setRealname("Bot Realname");
+    clients[bot_fd].authenticate();
+
+    std::cout << "Bot manually added to clients map with FD: " << bot_fd << std::endl;
+    
+    #endif
 }
 
 Server::~Server() {}
@@ -22,7 +37,6 @@ std::map<int, Client>& Server::getClients() {
 std::map<std::string, Channel>& Server::getChannels() {
     return channels;
 }
-
 
 void Server::handleClientMessage(int client_fd) {
     if (clients.find(client_fd) == clients.end()) {

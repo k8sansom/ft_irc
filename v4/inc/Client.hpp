@@ -1,12 +1,7 @@
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
 
-#include <iostream>
-#include <string>
-#include <map>
-#include <cstdlib>
-#include <ctime>
-#include <sstream> 
+#include "lib_inc.hpp"
 
 class Client {
 public:

@@ -1,4 +1,4 @@
-#include "Server.hpp"
+#include "../inc/Server.hpp"
 
 void handleUserCommand(int client_fd, const std::string& message);
 std::vector<std::string> extractUserParams(const std::string& message);
