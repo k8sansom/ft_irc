@@ -15,9 +15,6 @@ void Server::handlePrivMsgCommand(int client_fd, const std::string& message) {
     }
 
     #ifdef BONUS
-    if (targetAndMessage.second.find("DCC SEND") != std::string::npos) {
-        handleDccSendRequest(client_fd, targetAndMessage.second);
-    } 
 
     else if (targetAndMessage.second[0] == '!') {
         bot->handleMessage(targetAndMessage.second, client_fd, targetAndMessage.first, this);
@@ -89,6 +86,8 @@ void Server::handleUserMsg(int client_fd, const std::string& target, const std::
             return;
         }
     }
-    std::string errorMsg = "401 " + clients[client_fd].getNickname() + " " + target + " :No such nick/channel\r\n";
-    send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
+    if (msgContent.find("DCC SEND") == std::string::npos) {
+        std::string errorMsg = "401 " + clients[client_fd].getNickname() + " " + target + " :No such nick/channel\r\n";
+        send(client_fd, errorMsg.c_str(), errorMsg.length(), 0);
+    }
 }

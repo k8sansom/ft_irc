@@ -29,7 +29,6 @@ void Server::handleJoinCommand(int client_fd, const std::string& message) {
         return;
     }
 
-    // Use a different name for the list of channel names
     std::vector<std::string> requestedChannels = split(params[0], ',');
     std::vector<std::string> keys = params.size() > 1 ? split(params[1], ',') : std::vector<std::string>();
 
@@ -41,7 +40,6 @@ void Server::handleJoinCommand(int client_fd, const std::string& message) {
             sendError(client_fd, ERR_NOSUCHCHANNEL, channel_name, "Invalid channel name.");
             continue;
         }
-        // Check if the channel exists in the channels map
         std::map<std::string, Channel>::iterator it = channels.find(channel_name);
         if (it != channels.end()) {
             joinExistingChannel(client_fd, channel_name, key);
@@ -60,13 +58,23 @@ std::vector<std::string> Server::extractParams(const std::string& message) {
 }
 
 void Server::leaveAllChannels(int client_fd) {
-    for (std::map<std::string, Channel>::iterator it = channels.begin(); it != channels.end(); ++it) {
+    for (std::map<std::string, Channel>::iterator it = channels.begin(); it != channels.end(); ) {
         it->second.removeClient(client_fd);
         std::string response = ":" + clients[client_fd].getNickname() + " PART " + it->first + "\r\n";
         send(client_fd, response.c_str(), response.length(), 0);
         it->second.broadcastMessage(response, client_fd);
+        
+        if (it->second.isEmpty()) {
+            std::cout << "Removing empty channel: " << it->first << std::endl;
+            std::map<std::string, Channel>::iterator temp = it;
+            ++it;
+            channels.erase(temp);
+        } else {
+            ++it;
+        }
     }
 }
+
 
 bool Server::isValidChannelName(const std::string& name) {
     return !name.empty() && name[0] == '#';

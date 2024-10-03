@@ -67,7 +67,6 @@ bool Channel::isEmpty() const {
 }
 
 bool Channel::isOperator(int client_fd) const {
-    // Use std::set::find to check if the client_fd exists in the _operators set
     return _operators.find(client_fd) != _operators.end();
 }
 
@@ -77,7 +76,6 @@ void Channel::broadcastMessage(const std::string& message, int exclude_fd) {
     for (std::vector<int>::iterator it = _members.begin(); it != _members.end(); ++it) {
         int member_fd = *it;
 
-        // Skip sending to the excluded client, unless exclude_fd is -1
         if (exclude_fd != -1 && member_fd == exclude_fd) {
             continue;
         }
@@ -92,7 +90,6 @@ void Channel::broadcastMessage(const std::string& message, int exclude_fd) {
     }
 }
 
-
 bool Channel::checkChannelKey(const std::string key) const {
     if (key != _key) {
         std::cout << "Channel password is incorrect." << std::endl;
@@ -102,12 +99,10 @@ bool Channel::checkChannelKey(const std::string key) const {
 }
 
 bool Channel::checkInvite(int client_fd) const {
-    // Check if invite-only mode is active
     if (_inviteOnly) {
-        // Check if the client_fd is on the invite list
         if (_invitedClients.find(client_fd) == _invitedClients.end()) {
             std::cout << "You are not invited to this channel." << std::endl;
-            return false; // Client is not invited
+            return false;
         }
     }
 	return true;
@@ -115,13 +110,12 @@ bool Channel::checkInvite(int client_fd) const {
 
 bool Channel::checkUserLimit(void) const {
 	if (_userLimit > 0) {
-        // Get the current number of members in the channel
         if (_members.size() >= _userLimit) {
             std::cout << "User limit reached. Cannot join." << std::endl;
-            return false; // User limit has been reached
+            return false;
         }
     }
-    return true; // Client can join the channel
+    return true;
 }
 
 void Channel::kick(Client& kickerClient, Client& targetClient, const std::string& reason) {
@@ -142,8 +136,7 @@ void Channel::kick(Client& kickerClient, Client& targetClient, const std::string
 
 void Channel::invite(Client& inviterClient, Client& targetClient) {
     if (_invitedClients.find(targetClient.getFd()) == _invitedClients.end()) {
-        _invitedClients.insert(targetClient.getFd()); // Mark as invited
-
+        _invitedClients.insert(targetClient.getFd());
         std::string invite_message = ":" + inviterClient.getNickname() + " INVITE " + targetClient.getNickname() + " :" + _name + "\r\n";
         broadcastMessage(invite_message, -1);
 
@@ -181,7 +174,7 @@ void Channel::mode(const char flag, const char sign, const std::string& param) {
 
         case 'k':  // Set channel key
 			if (sign == '+') {
-				_key = param;  // Set the key directly
+				_key = param;
 				_keyReq = true;
 				std::cout << "MODE: Channel key set to: " << _key << std::endl;
 			} else {
@@ -192,14 +185,27 @@ void Channel::mode(const char flag, const char sign, const std::string& param) {
         	break;
 
         case 'l':  // Set user limit
-			if (sign == '+') {
-				std::stringstream ss1(param);
-				ss1 >> _userLimit;  // Set the user limit
-				std::cout << "MODE: User limit set to: " << _userLimit << std::endl;
-			} else {
-				_userLimit = 0;
-			}
-			break;
+            if (sign == '+') {
+                if (!param.empty()) {
+                    bool isDigit = true;
+                    for (std::string::const_iterator it = param.begin(); it != param.end(); ++it) {
+                        if (!isdigit(*it)) {
+                            isDigit = false;
+                            break;
+                        }
+                    }
+                    if (isDigit) {
+                        std::stringstream ss1(param);
+                        ss1 >> _userLimit;  // Set the user limit
+                        std::cout << "MODE: User limit set to: " << _userLimit << std::endl;
+                    } else {
+                        std::cout << "MODE: Invalid user limit parameter." << std::endl;
+                    }
+                }
+            } else {
+                _userLimit = 0;
+            }
+            break;
 
         case 'o': {  // Grant operator privileges
             int clientFd;

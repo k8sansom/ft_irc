@@ -112,6 +112,8 @@ bool Bot::detectShit(const std::string& message, int client_fd, const std::strin
     inappropriate_words.push_back("bullshit");
     inappropriate_words.push_back("asshole");
     inappropriate_words.push_back("pidoras");
+    inappropriate_words.push_back("zasranets");
+    inappropriate_words.push_back("scumbag");
     for (std::vector<std::string>::iterator it = inappropriate_words.begin(); it != inappropriate_words.end(); ++it) {
         if (lower_message.find(*it) != std::string::npos) {
             std::string warning = "Warning! Please avoid using inappropriate language.";

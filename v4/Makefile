@@ -1,11 +1,13 @@
 NAME = ircserv
 BONUS_NAME = ircserv_bonus
 CC = c++
-CFLAGS = -Wall -Wextra -Werror -std=c++98 #-DBONUS
+CFLAGS = -Wall -Wextra -Werror -std=c++98
+BONUS_CFLAGS = $(CFLAGS) -DBONUS
 
 SRCS = 	src/Client.cpp \
 		src/Server.cpp \
 		src/Server_connection.cpp \
+		src/Server_pass_who_part.cpp \
 		src/Server_invite.cpp \
 		src/Server_join.cpp \
 		src/Server_kick.cpp \
@@ -18,12 +20,13 @@ SRCS = 	src/Client.cpp \
 		src/Channel.cpp \
 		src/main.cpp
 
-BONUS_SRCS = src/Server_file_transfer.cpp src/Bot.cpp 
+BONUS_SRCS = src/Bot.cpp 
 
 OBJDIR = obj
+BONUS_OBJDIR = bonus_obj
 
 OBJS = $(SRCS:%.cpp=$(OBJDIR)/%.o)
-BONUS_OBJS = $(OBJS) $(BONUS_SRCS:%.cpp=$(OBJDIR)/%.o)
+BONUS_OBJS = $(SRCS:%.cpp=$(BONUS_OBJDIR)/%.o) $(BONUS_SRCS:%.cpp=$(BONUS_OBJDIR)/%.o)
 
 all: $(NAME)
 
@@ -31,16 +34,20 @@ $(NAME): $(OBJS)
 		$(CC) $(CFLAGS) $^ -o $@
 
 $(BONUS_NAME): $(BONUS_OBJS)
-		$(CC) $(CFLAGS) $^ -o $@
+		$(CC) $(BONUS_CFLAGS) $^ -o $@
 
 $(OBJDIR)/%.o: %.cpp
-		@mkdir -p $(dir $@)  
+		@mkdir -p $(dir $@)
 		$(CC) $(CFLAGS) -c $< -o $@
+
+$(BONUS_OBJDIR)/%.o: %.cpp
+		@mkdir -p $(dir $@)
+		$(CC) $(BONUS_CFLAGS) -c $< -o $@
 
 bonus: $(BONUS_NAME)
 
 clean:
-		rm -rf $(OBJDIR)
+		rm -rf $(OBJDIR) $(BONUS_OBJDIR)
 
 fclean: clean
 		rm -f $(NAME) $(BONUS_NAME)

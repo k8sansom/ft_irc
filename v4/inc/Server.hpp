@@ -51,8 +51,11 @@ private:
     // Client message handling
     void handleClientMessage(int client_fd);
     std::vector<std::string> receiveMessage(int client_fd);
+
+    //Server_pass_who_part
     void handlePassCommand(int client_fd, const std::string& message);
     void handleWhoCommand(int client_fd, const std::string& message);
+    void handlePartCommand(int client_fd, const std::string& message);
 
     // Server_utils
     bool isCommandFormatValid(const std::string& message, const std::string& command);
@@ -97,9 +100,6 @@ private:
 	void handleTopicCommand(int client_fd, const std::string& message);
 	void handleModeCommand(int client_fd, const std::string& message);
 
-    #ifdef BONUS
-    void handleDccSendRequest(int client_fd, const std::string& message);
-    #endif
 };
 
 #endif
