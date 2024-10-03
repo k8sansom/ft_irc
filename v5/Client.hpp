@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <ctime>
 #include <sstream>
+#include <vector>
 
 class Client {
 public:
@@ -35,7 +36,30 @@ public:
 
     std::string& getBuffer() { return _buffer; }
     void clearBuffer() { _buffer.clear(); }
+        void queueMessage(const std::string& message) {
+        messageQueue.push_back(message);  // Push new messages to the back of the queue
+    }
+
+    bool hasQueuedMessages() const {
+        return !messageQueue.empty();  // Check if there are any queued messages
+    }
+
+    std::string dequeueMessage() {
+        if (!messageQueue.empty()) {
+            std::string msg = messageQueue.front();
+            messageQueue.erase(messageQueue.begin());  // Remove the front message after sending
+            return msg;
+        }
+        return "";
+    }
+
+    // Additional method to get the size of the message queue
+    size_t getMessageQueueSize() const {
+        return messageQueue.size();
+    }
+
 private:
+    std::vector<std::string> messageQueue;
     std::string _buffer;
     int 		_fd;
     std::string _nickname;

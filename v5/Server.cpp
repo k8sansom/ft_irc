@@ -107,3 +107,26 @@ void Server::handleWhoCommand(int client_fd, const std::string& message) {
     }
 }
 
+void Server::sendMessageToClient(int client_fd, const std::string& message) {
+    ssize_t bytes_sent = send(client_fd, message.c_str(), message.length(), 0);
+
+    if (bytes_sent < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+        // Client is unresponsive, queue the message for later
+        clients[client_fd].queueMessage(message);
+    }
+}
+
+void Server::processQueuedMessages(int client_fd) {
+    Client& client = clients[client_fd];
+
+    while (client.hasQueuedMessages()) {
+        std::string message = client.dequeueMessage();
+        ssize_t bytes_sent = send(client_fd, message.c_str(), message.length(), 0);
+
+        if (bytes_sent < 0 && (errno == EAGAIN || errno == EWOULDBLOCK)) {
+            // Re-queue message if the client is still unresponsive
+            client.queueMessage(message);
+            break;  // Stop sending more messages to avoid overwhelming the client
+        }
+    }
+}

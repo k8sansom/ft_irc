@@ -79,20 +79,20 @@ void Server::acceptClient() {
     clients.insert(std::make_pair(client_fd, Client(client_fd)));
     std::cout << "New client connected: " << client_fd << std::endl;
     std::string response =
-       " \r\n"                                                   
+       " \r\n"
        " _|          _|  _|_|_|_|  _|          _|_|_|    _|_|    _|      _|  _|_|_|_|  \r\n"
        " _|          _|  _|        _|        _|        _|    _|  _|_|  _|_|  _|        \r\n"
        " _|    _|    _|  _|_|_|    _|        _|        _|    _|  _|  _|  _|  _|_|_|    \r\n"
        "   _|  _|  _|    _|        _|        _|        _|    _|  _|      _|  _|        \r\n"
        "     _|  _|      _|_|_|_|  _|_|_|_|    _|_|_|    _|_|    _|      _|  _|_|_|_|  \r\n"
         " \r\n"
-       " \r\n"                       
+       " \r\n"
        "THIS IS 3.5 SERVER\r\n"
-       " \r\n";                                                                                      
+       " \r\n";
     send(client_fd, response.c_str(), response.length(), 0);
 }
 
-void Server::pollClients() {
+/* void Server::pollClients() {
     fds.clear();
 
     pollfd server_fd;
@@ -126,6 +126,59 @@ void Server::pollClients() {
     for (size_t i = 1; i < fds.size(); ++i) {
         if (fds[i].revents & POLLIN) {
             handleClientMessage(fds[i].fd);
+        }
+    }
+} */
+
+void Server::pollClients() {
+    fds.clear();
+
+    // Add server socket to poll list
+    pollfd server_fd;
+    server_fd.fd = server_socket;
+    server_fd.events = POLLIN;
+    fds.push_back(server_fd);
+
+    std::cout << "List of clients: " << std::endl;
+    for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it) {
+        pollfd client_fd;
+        client_fd.fd = it->first;
+        client_fd.events = POLLIN;  // Always want to check for incoming data
+
+        // If the client has queued messages, also check for POLLOUT (writability)
+        if (it->second.hasQueuedMessages()) {
+            client_fd.events |= POLLOUT;
+        }
+
+        fds.push_back(client_fd);
+        std::cout << it->second.getNickname() << std::endl;
+    }
+    std::cout << "Number of clients: " << clients.size() << std::endl;
+
+    int ret = poll(fds.data(), fds.size(), -1);
+    if (ret < 0) {
+        std::cerr << "ERROR: Poll error" << std::endl;
+        return;
+    } else if (ret == 0) {
+        // Timeout occurred; no events happened in the last second
+        return;
+    }
+
+    // Handle new incoming connections
+    if (fds[0].revents & POLLIN) {
+        acceptClient();
+    }
+
+    // Handle client events
+    for (size_t i = 1; i < fds.size(); ++i) {
+        if (fds[i].revents & POLLIN) {
+            // Handle incoming message
+            handleClientMessage(fds[i].fd);
+        }
+
+        if (fds[i].revents & POLLOUT) {
+            // Handle sending queued messages for this client
+            processQueuedMessages(fds[i].fd);
         }
     }
 }

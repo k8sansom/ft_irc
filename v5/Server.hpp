@@ -17,6 +17,7 @@
 #include <csignal>
 #include <ctime>
 #include <algorithm>
+#include <cerrno>
 
 #define ANSI_RESET "\033[0m"
 #define ANSI_PINK "\033[38;5;205m"
@@ -46,6 +47,17 @@ public:
     static void cleanup();
 
     bool processClientMessage(int client_fd, const std::string& message);
+    void processQueuedMessages(int client_fd);
+    void sendMessageToClient(int client_fd, const std::string& message);
+    void floodControl(int client_fd) {
+        if (clients[client_fd].getMessageQueueSize() > 30) {
+            std::string err_msg = "ERROR: You are flooding the server.\r\n";
+            send(client_fd, err_msg.c_str(), err_msg.length(), 0);
+            close(client_fd);  // Close the connection
+            clients.erase(client_fd);  // Remove the client
+            std::cerr << "Client " << client_fd << " kicked for flooding." << std::endl;
+        }
+    }
 private:
     static int server_socket;
     int port;
