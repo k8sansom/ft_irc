@@ -17,10 +17,11 @@ SRCS = 	src/Client.cpp \
 		src/Server_topic.cpp \
 		src/Server_user.cpp \
 		src/Server_utils.cpp \
+		src/Server_msgHandle.cpp \
 		src/Channel.cpp \
 		src/main.cpp
 
-BONUS_SRCS = src/Bot.cpp 
+BONUS_SRCS = src/Bot.cpp
 
 OBJDIR = obj
 BONUS_OBJDIR = bonus_obj

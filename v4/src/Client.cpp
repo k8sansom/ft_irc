@@ -53,7 +53,7 @@ bool Client::isValidNickname(const std::string& nickname) const {
 }
 
 std::string Client::sanitizeNickname(const std::string& nickname, std::string &err_msg) const {
-    if (nickname.empty()) 
+    if (nickname.empty())
         return "";
 
     std::string sanitized_nickname;
@@ -140,3 +140,27 @@ bool Client::checkAttributes(std::string& error_msg) const {
     return true;
 }
 
+std::string&	Client::getBuffer() { return _buffer; }
+
+void	Client::clearBuffer() { _buffer.clear(); }
+
+void	Client::queueMessage(const std::string& message) {
+	_messageQueue.push_back(message);
+}
+
+bool	Client::hasQueuedMessages() const {
+	return !_messageQueue.empty();
+}
+
+std::string	Client::dequeueMessage() {
+	if (!_messageQueue.empty()) {
+		std::string msg = _messageQueue.front();
+		_messageQueue.erase(_messageQueue.begin());
+		return msg;
+	}
+	return "";
+}
+
+size_t	Client::getMessageQueueSize() const {
+	return _messageQueue.size();
+}

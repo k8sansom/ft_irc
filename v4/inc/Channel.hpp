@@ -9,7 +9,7 @@ private:
     std::string _name;
     std::vector<int> _members;
     std::string _topic;
-    std::string _key; 
+    std::string _key;
     std::set<int> _invitedClients;
     std::set<int> _operators;
 	bool _inviteOnly;
@@ -28,7 +28,7 @@ public:
     const std::vector<int>& getMembers() const;
     std::string getTopic() const;
 	bool getMode(const std::string mode) const;
-    std::string getCurrentModeFlags() const; 
+    std::string getCurrentModeFlags() const;
 
     bool addClient(int client_fd);
     void removeClient(int client_fd);
